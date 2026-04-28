@@ -1,11 +1,61 @@
-/* KinCircle UI primitives — the small set of widgets every screen reuses.
+/* KinCircle UI primitives — widgets and layout helpers every screen reuses.
    Depends on tokens.css. */
 
-/* === BUTTON === */
+/* ============ LAYOUT ============ */
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+  border: 0;
+}
+
+/* ============ TEXT UTILITIES ============ */
+.muted   { color: var(--ink-soft); }
+.subtle  { color: oklch(0.6 0.018 50); }
+
+/* ============ APP HEADER ============ */
+.app-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.brand {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.brand .accent { color: var(--primary); }
+
+/* ============ BUTTON ============ */
+/* `.btn` and `.btn-pill` are aliases — same widget, two names for legacy reasons. */
+.btn,
 .btn-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 11px 22px;
   border-radius: var(--radius-pill);
   font-family: inherit;
@@ -13,31 +63,89 @@
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  border: none;
+  border: 0;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   white-space: nowrap;
-}
-.btn-pill.primary {
   background: var(--primary);
   color: var(--bg);
   box-shadow: 0 1px 0 var(--primary-deep) inset, var(--shadow-sm);
 }
+.btn:hover,
+.btn-pill:hover,
+.btn.primary:hover,
 .btn-pill.primary:hover {
   background: var(--primary-deep);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
+.btn:active,
+.btn-pill:active { transform: translateY(0); }
+
+.btn.primary,
+.btn-pill.primary {
+  background: var(--primary);
+  color: var(--bg);
+}
+.btn.secondary,
+.btn-pill.secondary {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.btn.secondary:hover,
+.btn-pill.secondary:hover {
+  background: var(--bg-warm);
+  border-color: var(--border-strong);
+  box-shadow: none;
+  transform: none;
+}
+.btn.ghost,
 .btn-pill.ghost {
   background: transparent;
   color: var(--ink);
   border: 1px solid var(--border);
+  box-shadow: none;
 }
+.btn.ghost:hover,
 .btn-pill.ghost:hover {
   border-color: var(--primary);
   color: var(--primary);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.btn.sm,
+.btn-pill.sm {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
 }
 
-/* === STATUS BADGE === */
+/* ============ BADGE ============ */
+/* General-purpose chip — uses honey wash by default. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.badge.sage  { background: var(--sage-soft); color: var(--sage-foreground); }
+.badge.muted { background: var(--muted); color: var(--ink-soft); }
+.badge.dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* Status-specific badges (for household/RSVP states in mocks) */
 .status-badge {
   font-size: 0.74rem;
   padding: 3px 9px;
@@ -49,19 +157,19 @@
 .status-voted   { background: oklch(0.94 0.10 75); color: oklch(0.45 0.13 65); }
 .status-sage    { background: var(--sage-soft); color: var(--sage-foreground); }
 
-/* === CARD === */
-.card-surface {
+/* ============ CARD ============ */
+.card {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
 }
-.card-surface.raised {
+.card.raised {
   box-shadow: var(--shadow-md);
   border-color: transparent;
 }
 
-/* === INPUT === */
+/* ============ INPUT ============ */
 .input,
 .textarea {
   width: 100%;
@@ -86,7 +194,7 @@
   margin-bottom: 0.4rem;
 }
 
-/* === AVATAR === */
+/* ============ AVATAR ============ */
 .avatar {
   width: 36px;
   height: 36px;
