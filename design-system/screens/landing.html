@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KinCircle — gather the people who matter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css" />
+<style>
+  /* ============ NAV ============ */
+  nav.site {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 18px 5vw;
+    display: flex; align-items: center; justify-content: space-between;
+    background: oklch(0.985 0.005 85 / 0.85);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+  nav.site.scrolled { border-bottom-color: var(--border); }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-serif);
+    font-size: 1.4rem; font-weight: 500;
+    color: var(--ink); text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .logo-mark { width: 32px; height: 32px; }
+  .logo-mark svg { width: 100%; height: 100%; }
+  .nav-links {
+    display: flex; gap: 36px; align-items: center; list-style: none;
+    margin: 0; padding: 0;
+  }
+  .nav-links a {
+    color: var(--ink-soft); text-decoration: none;
+    font-size: 0.94rem; font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--primary); }
+
+  .btn-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-family: inherit; font-size: 0.94rem; font-weight: 600;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn-pill.primary {
+    background: var(--primary); color: var(--bg);
+    box-shadow: 0 1px 0 oklch(0.42 0.12 38 / 0.4) inset, var(--shadow-sm);
+  }
+  .btn-pill.primary:hover {
+    background: var(--primary-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .btn-pill.ghost {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  .btn-pill.ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+  @media (max-width: 760px) {
+    .nav-links { display: none; }
+  }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    padding: 140px 5vw 80px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 64px;
+    align-items: center;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -200px; right: -200px;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center,
+      oklch(0.92 0.10 80 / 0.55) 0%,
+      oklch(0.92 0.10 80 / 0.20) 35%,
+      transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .hero-content { position: relative; z-index: 2; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    background: var(--muted); border: 1px solid var(--border);
+    font-size: 0.85rem; color: var(--ink-soft);
+    margin-bottom: 28px; font-weight: 500;
+  }
+  .eyebrow-dot {
+    width: 22px; height: 22px;
+    background: var(--accent); border-radius: 50%;
+    display: inline-grid; place-items: center;
+    color: var(--ink); font-size: 0.7rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.6rem, 6.2vw, 5.4rem);
+    font-weight: 400;
+    margin-bottom: 28px;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+  .hero h1 em {
+    font-style: italic; color: var(--primary); font-weight: 400;
+  }
+  .hero h1 .underlined { position: relative; white-space: nowrap; }
+  .hero h1 .underlined::after {
+    content: ''; position: absolute;
+    left: -2%; bottom: 0.05em;
+    width: 104%; height: 0.32em;
+    background: var(--accent);
+    z-index: -1; border-radius: 4px;
+    transform: skew(-3deg);
+  }
+
+  .hero p.lede {
+    font-size: 1.18rem; color: var(--ink-soft);
+    max-width: 520px; margin-bottom: 36px; line-height: 1.6;
+  }
+  .hero-cta {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  }
+  .hero-meta {
+    margin-top: 48px;
+    display: flex; align-items: center; gap: 18px;
+    color: var(--ink-soft); font-size: 0.9rem;
+  }
+  .avatars { display: flex; }
+  .avatars .avatar-stack {
+    width: 36px; height: 36px;
+    border-radius: 50%; border: 2.5px solid var(--bg);
+    margin-left: -10px;
+    background-size: cover; background-position: center;
+  }
+  .avatars .avatar-stack:first-child { margin-left: 0; }
+  .avatars .avatar-stack:nth-child(1) { background: linear-gradient(135deg, oklch(0.65 0.14 50), oklch(0.55 0.13 40)); }
+  .avatars .avatar-stack:nth-child(2) { background: linear-gradient(135deg, oklch(0.78 0.13 75), oklch(0.65 0.14 70)); }
+  .avatars .avatar-stack:nth-child(3) { background: linear-gradient(135deg, oklch(0.55 0.10 35), oklch(0.42 0.10 30)); }
+  .avatars .avatar-stack:nth-child(4) { background: linear-gradient(135deg, oklch(0.85 0.10 60), oklch(0.72 0.12 55)); }
+
+  /* HERO PHOTO */
+  .hero-visual {
+    position: relative; z-index: 1;
+    aspect-ratio: 4/5;
+    max-height: 640px;
+  }
+  .hero-photo {
+    position: absolute; inset: 0;
+    border-radius: 280px 280px 32px 32px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: oklch(0.42 0.12 38);
+  }
+  .hero-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center 35%;
+    display: block;
+  }
+  .hero-photo::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+      oklch(0.55 0.13 40 / 0) 50%,
+      oklch(0.42 0.12 38 / 0.30) 100%);
+    pointer-events: none;
+  }
+
+  .floating-card {
+    position: absolute;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow-md);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.88rem;
+    z-index: 3;
+  }
+  .floating-card .icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .floating-card.card-1 {
+    top: 12%; left: -32px;
+    animation: float 6s ease-in-out infinite;
+  }
+  .floating-card.card-1 .icon { background: oklch(0.78 0.13 75); }
+  .floating-card.card-2 {
+    bottom: 18%; right: -38px;
+    animation: float 6s ease-in-out infinite 2s;
+  }
+  .floating-card.card-2 .icon { background: oklch(0.55 0.13 40); color: white; }
+  .floating-card .label { font-weight: 700; font-family: var(--font-serif); font-size: 0.95rem; }
+  .floating-card .sublabel { color: var(--ink-soft); font-size: 0.78rem; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @media (max-width: 920px) {
+    .hero { grid-template-columns: 1fr; gap: 60px; padding-top: 120px; }
+    .hero-visual { max-height: 480px; aspect-ratio: 4/4.5; }
+    .floating-card.card-1 { left: 8px; }
+    .floating-card.card-2 { right: 8px; }
+  }
+
+  /* ============ MARQUEE ============ */
+  .marquee {
+    padding: 28px 0;
+    background: var(--muted);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden; position: relative;
+  }
+  .marquee::before, .marquee::after {
+    content: ''; position: absolute;
+    top: 0; bottom: 0; width: 80px;
+    z-index: 2; pointer-events: none;
+  }
+  .marquee::before { left: 0; background: linear-gradient(90deg, var(--muted), transparent); }
+  .marquee::after { right: 0; background: linear-gradient(-90deg, var(--muted), transparent); }
+  .marquee-track {
+    display: flex; gap: 60px;
+    animation: scroll 40s linear infinite;
+    width: max-content;
+  }
+  .marquee-item {
+    font-family: var(--font-serif); font-style: italic;
+    font-size: 1.4rem; color: var(--primary-deep);
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 60px;
+  }
+  .marquee-item::after {
+    content: '\2726'; color: var(--accent-deep);
+    font-style: normal; font-size: 0.9rem;
+  }
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ============ SECTION SHARED ============ */
+  section.block {
+    padding: 120px 5vw;
+    position: relative;
+  }
+  .section-eyebrow {
+    display: inline-block;
+    font-family: var(--font-serif); font-style: italic;
+    font-size: 1.1rem; color: var(--primary);
+    margin-bottom: 16px; font-weight: 400;
+  }
+  .section-eyebrow::before { content: '\2014\00a0'; color: var(--accent-deep); }
+  .section-title {
+    font-size: clamp(2.2rem, 4.4vw, 3.6rem);
+    margin-bottom: 24px; max-width: 800px;
+    font-weight: 400; line-height: 1.05;
+  }
+  .section-title em { color: var(--primary); font-style: italic; }
+  .section-sub {
+    font-size: 1.1rem; color: var(--ink-soft);
+    max-width: 600px; margin-bottom: 64px;
+  }
+
+  /* ============ HOW IT WORKS ============ */
+  .how-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 24px; margin-top: 56px;
+  }
+  .how-step {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    position: relative;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .how-step:hover {
+    transform: translateY(-6px);
+    border-color: var(--primary-soft);
+    box-shadow: var(--shadow-md);
+  }
+  .step-num {
+    font-family: var(--font-serif);
+    font-size: 4rem; font-style: italic; font-weight: 300;
+    color: var(--accent); line-height: 1;
+    margin-bottom: 24px; display: block;
+  }
+  .how-step h3 {
+    font-size: 1.5rem; font-weight: 500; margin-bottom: 12px;
+    font-family: var(--font-serif);
+  }
+  .how-step p { color: var(--ink-soft); font-size: 0.98rem; }
+  .step-icon {
+    position: absolute;
+    top: 32px; right: 32px;
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--muted);
+    display: grid; place-items: center;
+    color: var(--primary);
+  }
+  @media (max-width: 760px) {
+    .how-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ============ FEATURES ============ */
+  .feature-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items: center;
+    margin-bottom: 140px;
+  }
+  .feature-row:last-child { margin-bottom: 0; }
+  .feature-row.reversed { direction: rtl; }
+  .feature-row.reversed > * { direction: ltr; }
+
+  .feature-row h3 {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    margin-bottom: 20px;
+    font-weight: 400;
+    font-family: var(--font-serif);
+  }
+  .feature-row h3 em { color: var(--primary); font-style: italic; }
+  .feature-row p {
+    color: var(--ink-soft);
+    font-size: 1.05rem; margin-bottom: 24px;
+  }
+  .feature-checks { list-style: none; display: grid; gap: 12px; padding: 0; margin: 0; }
+  .feature-checks li {
+    display: flex; align-items: flex-start; gap: 12px;
+    color: var(--ink); font-size: 0.98rem;
+  }
+  .feature-checks li::before {
+    content: '\2713';
+    color: var(--bg); background: var(--primary);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;
+    font-weight: 700;
+  }
+
+  /* MOCKS */
+  .mock {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+  }
+  .mock-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .mock-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem; font-weight: 500;
+  }
+  .mock-pill {
+    font-size: 0.78rem;
+    background: var(--muted);
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: var(--ink-soft);
+  }
+
+  .household-row-mock {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .household-row-mock:last-child { border-bottom: none; }
+  .household-avatar {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-family: var(--font-serif); font-weight: 500;
+    color: var(--bg); flex-shrink: 0;
+  }
+  .household-info { flex: 1; min-width: 0; }
+  .household-info .name { font-weight: 600; font-size: 0.95rem; }
+  .household-info .detail { font-size: 0.82rem; color: var(--ink-soft); }
+  .status-badge {
+    font-size: 0.74rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .status-claimed { background: oklch(0.92 0.08 130); color: oklch(0.42 0.12 130); }
+  .status-pending { background: var(--muted); color: var(--ink-soft); }
+  .status-voted { background: oklch(0.94 0.10 75); color: oklch(0.45 0.13 65); }
+
+  .date-options { display: grid; gap: 10px; }
+  .date-option {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .date-option:hover { border-color: var(--primary-soft); }
+  .date-option.winner {
+    border-color: var(--primary);
+    background: oklch(0.95 0.04 50);
+  }
+  .date-option .date-info { display: flex; flex-direction: column; }
+  .date-option .day { font-family: var(--font-serif); font-weight: 500; font-size: 1rem; }
+  .date-option .date-detail { font-size: 0.8rem; color: var(--ink-soft); }
+  .vote-bar { display: flex; align-items: center; gap: 10px; }
+  .bar-track {
+    width: 60px; height: 6px;
+    background: var(--muted);
+    border-radius: 999px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 999px;
+  }
+  .date-option.winner .bar-fill { background: var(--primary); }
+  .vote-count { font-size: 0.85rem; font-weight: 600; min-width: 26px; text-align: right; }
+
+  .map-mock {
+    aspect-ratio: 16/10;
+    border-radius: 16px;
+    background: radial-gradient(circle at 50% 50%, oklch(0.92 0.06 60) 0%, oklch(0.86 0.04 55) 60%);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .map-mock svg { width: 100%; height: 100%; display: block; }
+  .map-pin {
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  .map-pin.household { background: var(--primary); }
+  .map-pin.center {
+    background: var(--accent-deep);
+    width: 32px; height: 32px;
+    border: 3px solid var(--bg);
+    z-index: 2;
+  }
+  .map-pin::after {
+    content: ''; position: absolute; inset: 25%;
+    border-radius: 50%; background: var(--bg);
+  }
+
+  @media (max-width: 920px) {
+    .feature-row { grid-template-columns: 1fr; gap: 40px; margin-bottom: 80px; }
+    .feature-row.reversed { direction: ltr; }
+  }
+
+  /* ============ LIFESTYLE BAND ============ */
+  .lifestyle {
+    padding: 100px 5vw;
+    background: var(--bg-warm);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .lifestyle .intro {
+    max-width: 720px; margin: 0 auto 64px; text-align: center;
+  }
+  .lifestyle .intro h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 400; margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  .lifestyle .intro h2 em { font-style: italic; color: var(--primary); }
+  .lifestyle .intro p { color: var(--ink-soft); font-size: 1.05rem; }
+
+  .lifestyle-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 16px;
+    max-width: 1280px;
+    margin: 0 auto;
+    aspect-ratio: 16/9;
+  }
+  .lifestyle-grid figure {
+    margin: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-md);
+  }
+  .lifestyle-grid figure img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  .lifestyle-grid figure:hover img { transform: scale(1.04); }
+  .lifestyle-grid figure figcaption {
+    position: absolute; left: 16px; bottom: 16px;
+    color: white;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.05rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .lifestyle-grid figure.span-2 { grid-row: 1 / 3; }
+  .lifestyle-grid figure::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, oklch(0.2 0.02 30 / 0.5) 100%);
+    pointer-events: none;
+  }
+  @media (max-width: 760px) {
+    .lifestyle-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+      aspect-ratio: auto;
+    }
+    .lifestyle-grid figure { aspect-ratio: 1; }
+    .lifestyle-grid figure.span-2 { grid-column: 1 / -1; aspect-ratio: 16/10; grid-row: auto; }
+  }
+
+  /* ============ TESTIMONIAL ============ */
+  .testimonial {
+    background: var(--primary);
+    color: var(--bg);
+    padding: 100px 5vw;
+    position: relative;
+    overflow: hidden;
+  }
+  .testimonial::before {
+    content: '"';
+    position: absolute;
+    font-family: var(--font-serif);
+    font-size: 32rem;
+    line-height: 0.7;
+    top: -40px; left: -50px;
+    color: oklch(0.42 0.12 38 / 0.6);
+    font-weight: 300;
+  }
+  .testimonial-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    position: relative; z-index: 1;
+    text-align: center;
+  }
+  .testimonial blockquote {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+    font-weight: 300;
+    line-height: 1.3;
+    margin: 0 0 36px;
+    font-style: italic;
+  }
+  .testimonial cite {
+    display: flex; flex-direction: column; gap: 4px;
+    font-style: normal; align-items: center;
+  }
+  .testimonial cite .name {
+    font-family: var(--font-serif);
+    font-weight: 500; font-size: 1.1rem;
+  }
+  .testimonial cite .role {
+    font-size: 0.92rem;
+    color: oklch(0.92 0.08 80 / 0.85);
+  }
+
+  /* ============ STATS ============ */
+  .stats {
+    padding: 80px 5vw;
+    background: var(--bg-warm);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 32px; max-width: 1200px; margin: 0 auto;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--font-serif);
+    font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+    font-weight: 400;
+    color: var(--primary);
+    line-height: 1; margin-bottom: 8px;
+  }
+  .stat-num em { font-style: italic; color: var(--accent-deep); }
+  .stat-label { font-size: 0.92rem; color: var(--ink-soft); }
+  @media (max-width: 760px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ============ FINAL CTA WITH PHOTO ============ */
+  .final-cta {
+    position: relative;
+    padding: 160px 5vw;
+    text-align: center;
+    overflow: hidden;
+    color: white;
+  }
+  .final-cta .bg-photo {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    z-index: 0;
+  }
+  .final-cta::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at top, oklch(0.92 0.10 80 / 0.3), transparent 60%),
+      linear-gradient(180deg, oklch(0.2 0.04 30 / 0.55) 0%, oklch(0.42 0.12 38 / 0.7) 100%);
+    z-index: 1;
+  }
+  .final-cta > * { position: relative; z-index: 2; }
+  .final-cta h2 {
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    margin-bottom: 24px;
+    font-weight: 400; color: white;
+    line-height: 1.05;
+  }
+  .final-cta h2 em { color: var(--accent); font-style: italic; }
+  .final-cta p {
+    font-size: 1.15rem;
+    color: oklch(0.95 0.02 80);
+    margin: 0 auto 40px;
+    max-width: 540px;
+  }
+  .final-cta .btn-pill.primary {
+    background: var(--bg);
+    color: var(--primary-deep);
+    box-shadow: var(--shadow-md);
+  }
+  .final-cta .btn-pill.primary:hover {
+    background: var(--accent-soft);
+    color: var(--primary-deep);
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    padding: 60px 5vw 40px;
+    background: var(--ink);
+    color: oklch(0.85 0.02 60);
+  }
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid oklch(0.35 0.02 50);
+  }
+  footer .logo { color: var(--bg); }
+  footer .tagline {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.05rem;
+    color: oklch(0.78 0.05 70);
+    margin-top: 12px;
+    max-width: 280px;
+  }
+  footer h5 {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    color: var(--bg);
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  footer ul { list-style: none; display: grid; gap: 10px; padding: 0; margin: 0; }
+  footer ul a {
+    color: oklch(0.78 0.02 60);
+    text-decoration: none;
+    font-size: 0.92rem;
+    transition: color 0.2s;
+  }
+  footer ul a:hover { color: var(--accent); }
+  .footer-bottom {
+    padding-top: 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: oklch(0.65 0.02 60);
+    font-size: 0.85rem;
+  }
+  @media (max-width: 760px) {
+    .footer-top { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<nav class="site" id="nav">
+  <a href="#" class="logo">
+    <span class="logo-mark">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="oklch(0.55 0.13 40)" stroke-width="2"/>
+        <circle cx="11" cy="14" r="2.5" fill="oklch(0.55 0.13 40)"/>
+        <circle cx="21" cy="14" r="2.5" fill="oklch(0.78 0.13 75)"/>
+        <circle cx="13" cy="20" r="2.5" fill="oklch(0.78 0.13 75)"/>
+        <circle cx="19" cy="20" r="2.5" fill="oklch(0.55 0.13 40)"/>
+      </svg>
+    </span>
+    KinCircle
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#stories">Stories</a></li>
+  </ul>
+  <a href="dashboard.html" class="btn-pill primary">Start a reunion &rarr;</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="eyebrow">
+      <span class="eyebrow-dot">&#10038;</span>
+      The cousin coordination problem, solved
+    </div>
+    <h1>
+      Get the <em>whole</em> family<br>
+      around <span class="underlined">one table.</span>
+    </h1>
+    <p class="lede">
+      KinCircle takes the chaos out of family reunions &mdash; invites, dates, addresses, and a meeting spot that actually works for everyone. So you can spend less time herding texts, and more time at the table.
+    </p>
+    <div class="hero-cta">
+      <a href="dashboard.html" class="btn-pill primary">Plan your reunion &mdash; free</a>
+      <a href="#how" class="btn-pill ghost">See how it works</a>
+    </div>
+    <div class="hero-meta">
+      <div class="avatars">
+        <div class="avatar-stack"></div>
+        <div class="avatar-stack"></div>
+        <div class="avatar-stack"></div>
+        <div class="avatar-stack"></div>
+      </div>
+      <span>Trusted by 4,000+ families since last summer</span>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-photo">
+      <img src="../../public/images/Hero_image__ratio_169__prompt__a_candid_multigener_8d3011efec.jpeg" alt="A multigenerational family laughing around a long outdoor dinner table at golden hour" />
+    </div>
+
+    <div class="floating-card card-1">
+      <div class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12l5 5L20 7"/>
+        </svg>
+      </div>
+      <div>
+        <div class="label">Date locked</div>
+        <div class="sublabel">Sat, July 11 &middot; 12 votes</div>
+      </div>
+    </div>
+
+    <div class="floating-card card-2">
+      <div class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="label">Halfway point</div>
+        <div class="sublabel">Branson, MO</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span class="marquee-item">Reunions</span>
+    <span class="marquee-item">Cousins</span>
+    <span class="marquee-item">Grandkids</span>
+    <span class="marquee-item">Long tables</span>
+    <span class="marquee-item">Old recipes</span>
+    <span class="marquee-item">Group photos</span>
+    <span class="marquee-item">Reunions</span>
+    <span class="marquee-item">Cousins</span>
+    <span class="marquee-item">Grandkids</span>
+    <span class="marquee-item">Long tables</span>
+    <span class="marquee-item">Old recipes</span>
+    <span class="marquee-item">Group photos</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="block reveal" id="how">
+  <span class="section-eyebrow">How it works</span>
+  <h2 class="section-title">From scattered group chats to <em>one shared plan.</em></h2>
+  <p class="section-sub">Five steps from "we should really get together" to actually getting together.</p>
+
+  <div class="how-grid">
+    <div class="how-step">
+      <span class="step-num">i.</span>
+      <div class="step-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>
+      </div>
+      <h3>Create the reunion</h3>
+      <p>Give it a name, a rough timeframe, and a personal note. KinCircle handles the rest of the setup.</p>
+    </div>
+    <div class="how-step">
+      <span class="step-num">ii.</span>
+      <div class="step-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 8l8 5 8-5"/></svg>
+      </div>
+      <h3>Invite households</h3>
+      <p>One email per household, not per person. Each household claims their invite and adds members and address.</p>
+    </div>
+    <div class="how-step">
+      <span class="step-num">iii.</span>
+      <div class="step-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+      </div>
+      <h3>Vote on dates</h3>
+      <p>Propose up to four date options. Everyone votes. The democratic weekend wins &mdash; no more reply-all chains.</p>
+    </div>
+    <div class="how-step">
+      <span class="step-num">iv.</span>
+      <div class="step-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <h3>Find the meeting spot</h3>
+      <p>KinCircle calculates the geographic center of every household so nobody draws the long-drive straw.</p>
+    </div>
+    <div class="how-step" style="grid-column: 1 / -1;">
+      <span class="step-num">v.</span>
+      <div class="step-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5l-7 7 7 7"/><path d="M4 12h16"/></svg>
+      </div>
+      <h3>Keep everyone in the loop</h3>
+      <p>Post announcements, share what to bring, count down the days. The reunion stays alive between now and "see you there."</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE STORIES -->
+<section class="block" id="features" style="background: var(--bg-warm); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div style="max-width: 1200px; margin: 0 auto;">
+
+    <div class="feature-row reveal">
+      <div>
+        <span class="section-eyebrow">Households, not headcounts</span>
+        <h3>Aunt Linda doesn't want to <em>type her own address</em> twice.</h3>
+        <p>Invite by household, not by individual. Each household claims their invite, fills in who's coming (with age groups for the kids' table), and confirms their address &mdash; once.</p>
+        <ul class="feature-checks">
+          <li>One claim link per household, no app download required</li>
+          <li>Capture members + age groups so you can plan accordingly</li>
+          <li>Track who's claimed, who's voted, who's ghosting at a glance</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-header">
+          <div class="mock-title">Carter Family Reunion 2026</div>
+          <span class="mock-pill">12 households</span>
+        </div>
+        <div class="household-row-mock">
+          <div class="household-avatar" style="background: oklch(0.55 0.13 40);">C</div>
+          <div class="household-info">
+            <div class="name">The Carters (Boston)</div>
+            <div class="detail">Mom, Dad, 3 kids &middot; 5 members</div>
+          </div>
+          <span class="status-badge status-claimed">Claimed</span>
+        </div>
+        <div class="household-row-mock">
+          <div class="household-avatar" style="background: oklch(0.78 0.13 75); color: oklch(0.22 0.02 40);">P</div>
+          <div class="household-info">
+            <div class="name">Aunt Patty</div>
+            <div class="detail">1 member &middot; Tucson, AZ</div>
+          </div>
+          <span class="status-badge status-voted">Voted</span>
+        </div>
+        <div class="household-row-mock">
+          <div class="household-avatar" style="background: oklch(0.42 0.12 38);">M</div>
+          <div class="household-info">
+            <div class="name">Maria & Joe</div>
+            <div class="detail">2 adults, 1 teen &middot; Atlanta, GA</div>
+          </div>
+          <span class="status-badge status-claimed">Claimed</span>
+        </div>
+        <div class="household-row-mock">
+          <div class="household-avatar" style="background: oklch(0.65 0.14 70);">G</div>
+          <div class="household-info">
+            <div class="name">Grandma Ruth</div>
+            <div class="detail">Invited &middot; Chicago, IL</div>
+          </div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-row reversed reveal">
+      <div>
+        <span class="section-eyebrow">Pick a date, gracefully</span>
+        <h3>Four options. <em>One winner.</em> Zero passive-aggressive group texts.</h3>
+        <p>Propose up to four candidate weekends. Every household gets one vote. KinCircle tallies in real time, and you lock the winner with one click.</p>
+        <ul class="feature-checks">
+          <li>Up to 4 date options with vote tallies</li>
+          <li>Real-time results, viewable by everyone</li>
+          <li>Soft reminders for the cousin who hasn't voted (you know who)</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-header">
+          <div class="mock-title">When should we gather?</div>
+          <span class="mock-pill">Voting open</span>
+        </div>
+        <div class="date-options">
+          <div class="date-option">
+            <div class="date-info">
+              <span class="day">Sat, June 27</span>
+              <span class="date-detail">Memorial weekend</span>
+            </div>
+            <div class="vote-bar">
+              <div class="bar-track"><div class="bar-fill" style="width: 30%"></div></div>
+              <span class="vote-count">3</span>
+            </div>
+          </div>
+          <div class="date-option winner">
+            <div class="date-info">
+              <span class="day">Sat, July 11</span>
+              <span class="date-detail">Mid-summer &middot; winner</span>
+            </div>
+            <div class="vote-bar">
+              <div class="bar-track"><div class="bar-fill" style="width: 100%"></div></div>
+              <span class="vote-count">12</span>
+            </div>
+          </div>
+          <div class="date-option">
+            <div class="date-info">
+              <span class="day">Sat, August 1</span>
+              <span class="date-detail">Late summer</span>
+            </div>
+            <div class="vote-bar">
+              <div class="bar-track"><div class="bar-fill" style="width: 50%"></div></div>
+              <span class="vote-count">5</span>
+            </div>
+          </div>
+          <div class="date-option">
+            <div class="date-info">
+              <span class="day">Sat, Sept 5</span>
+              <span class="date-detail">Labor Day</span>
+            </div>
+            <div class="vote-bar">
+              <div class="bar-track"><div class="bar-fill" style="width: 20%"></div></div>
+              <span class="vote-count">2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-row reveal">
+      <div>
+        <span class="section-eyebrow">Geographic compromise</span>
+        <h3>Meet in the <em>middle</em> &mdash; actually.</h3>
+        <p>Once everyone's address is in, KinCircle finds the geographic center and suggests a meeting town. No more "but we always come to you." Lock the location and start counting down.</p>
+        <ul class="feature-checks">
+          <li>Auto-calculated centroid from every household's address</li>
+          <li>Suggests nearby towns with hotels, parks, and restaurants</li>
+          <li>One-click lock &mdash; directions sent to everyone</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="mock-header">
+          <div class="mock-title">Suggested meeting point</div>
+          <span class="mock-pill">5 households</span>
+        </div>
+        <div class="map-mock">
+          <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 30 80 Q 60 60 100 70 L 140 60 Q 180 55 220 65 L 270 60 Q 310 65 350 75 L 370 100 Q 365 130 360 150 L 350 180 Q 320 195 290 190 L 250 195 Q 210 200 170 195 L 130 200 Q 90 195 60 180 L 40 150 Q 30 120 30 80 Z"
+                  fill="oklch(0.78 0.05 70 / 0.5)"
+                  stroke="oklch(0.55 0.08 50)"
+                  stroke-width="1.5"
+                  stroke-dasharray="2 3"/>
+            <line x1="80" y1="100" x2="200" y2="130" stroke="oklch(0.55 0.13 40 / 0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <line x1="320" y1="100" x2="200" y2="130" stroke="oklch(0.55 0.13 40 / 0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <line x1="120" y1="170" x2="200" y2="130" stroke="oklch(0.55 0.13 40 / 0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <line x1="290" y1="170" x2="200" y2="130" stroke="oklch(0.55 0.13 40 / 0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <line x1="220" y1="80" x2="200" y2="130" stroke="oklch(0.55 0.13 40 / 0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+          </svg>
+          <div class="map-pin household" style="top: 35%; left: 18%;"></div>
+          <div class="map-pin household" style="top: 35%; left: 78%;"></div>
+          <div class="map-pin household" style="top: 65%; left: 28%;"></div>
+          <div class="map-pin household" style="top: 65%; left: 70%;"></div>
+          <div class="map-pin household" style="top: 28%; left: 53%;"></div>
+          <div class="map-pin center" style="top: 47%; left: 47%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+          <div>
+            <div style="font-family: var(--font-serif); font-weight: 500; font-size: 1.05rem;">Branson, Missouri</div>
+            <div style="font-size: 0.85rem; color: var(--ink-soft);">Avg. drive: 4h 12m &middot; Halfway between everyone</div>
+          </div>
+          <button class="btn-pill primary" style="padding: 8px 14px; font-size: 0.85rem;">Lock it in</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- LIFESTYLE BAND -->
+<section class="lifestyle reveal">
+  <div class="intro">
+    <span class="section-eyebrow">The point of all this</span>
+    <h2>It was never <em>about the spreadsheet.</em></h2>
+    <p>Plates passed across the table. Cousins finally meeting cousins. The grandkids who only know each other by name. KinCircle is a tool. The reunion is the point.</p>
+  </div>
+  <div class="lifestyle-grid">
+    <figure class="span-2">
+      <img src="../../public/images/Outdoor_gathering_banner_ratio_219_prompt_wide_cin_8fd89a70be.jpeg" alt="Outdoor pavilion family gathering by a lake" />
+      <figcaption>Saturdays look like this.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../public/images/Hands_passing_dishes_family_reunion_77205c2cd8.jpeg" alt="Hands passing food across a table" />
+      <figcaption>Every plate has a story.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../public/images/Kids_grandparents_family_reunion_4a2cad3fce.jpeg" alt="Grandparents laughing with grandkids" />
+      <figcaption>Three generations, one porch.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../public/images/Kids_grandparents_family_reunion_64ca7d140a.jpeg" alt="Kids and grandparents at a family reunion" />
+      <figcaption>The kids' table is loud.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../public/images/Hands_passing_dishes_family_reunion_ff5ea115d1.jpeg" alt="Family hands sharing food" />
+      <figcaption>Bring something. Anything.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial reveal">
+  <div class="testimonial-inner">
+    <blockquote>
+      We hadn't all been together since 2017. KinCircle is what finally got us into one room &mdash; 27 of us, four states, three generations. My grandma cried. Twice.
+    </blockquote>
+    <cite>
+      <span class="name">Maya Okonkwo</span>
+      <span class="role">Reunion organizer &middot; Okonkwo family &middot; Houston</span>
+    </cite>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stats-grid">
+    <div>
+      <div class="stat-num">4,200<em>+</em></div>
+      <div class="stat-label">Reunions planned</div>
+    </div>
+    <div>
+      <div class="stat-num">38<em>k</em></div>
+      <div class="stat-label">Family members reunited</div>
+    </div>
+    <div>
+      <div class="stat-num">94<em>%</em></div>
+      <div class="stat-label">Reunions actually happen</div>
+    </div>
+    <div>
+      <div class="stat-num">0</div>
+      <div class="stat-label">Reply-all email chains</div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA WITH PHOTO BG -->
+<section class="final-cta reveal" id="stories">
+  <img class="bg-photo" src="../../public/images/Final_cta_image_____ratio_169_____prompt_____a_rel_484ce1f63d.jpeg" alt="" />
+  <h2>The next reunion is the<br><em>one you actually plan.</em></h2>
+  <p>Free to start. No credit card. Your first reunion is on us.</p>
+  <a href="dashboard.html" class="btn-pill primary" style="font-size: 1rem; padding: 14px 28px;">Start a reunion &rarr;</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <a href="#" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14" stroke="oklch(0.78 0.13 75)" stroke-width="2"/>
+            <circle cx="11" cy="14" r="2.5" fill="oklch(0.55 0.13 40)"/>
+            <circle cx="21" cy="14" r="2.5" fill="oklch(0.78 0.13 75)"/>
+            <circle cx="13" cy="20" r="2.5" fill="oklch(0.78 0.13 75)"/>
+            <circle cx="19" cy="20" r="2.5" fill="oklch(0.55 0.13 40)"/>
+          </svg>
+        </span>
+        KinCircle
+      </a>
+      <p class="tagline">Gather the people who matter, in the place that makes sense.</p>
+    </div>
+    <div>
+      <h5>Product</h5>
+      <ul>
+        <li><a href="#">How it works</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">Mobile app</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Resources</h5>
+      <ul>
+        <li><a href="#">Reunion guide</a></li>
+        <li><a href="#">Family stories</a></li>
+        <li><a href="#">Help center</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 KinCircle. Made with warm light.</span>
+    <span>v 1.4.0 &middot; Saint Louis & beyond</span>
+  </div>
+</footer>
+
+<script>
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

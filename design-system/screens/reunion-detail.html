@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KinCircle — Zimmerman Summer Reunion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" />
+<link rel="stylesheet" href="../tokens.css" />
+<style>
+  .banner {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    margin-top: 1.5rem;
+    box-shadow: var(--shadow-md);
+  }
+  .banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .banner::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, oklch(0.2 0.02 50 / 0.15) 0%, oklch(0.2 0.02 50 / 0.65) 100%);
+  }
+  .banner-content {
+    position: relative; height: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 1.5rem 2rem; color: white; gap: 0.5rem;
+  }
+  .banner-content h1 { color: white; font-size: clamp(1.75rem, 3vw, 2.5rem); }
+  .banner-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; opacity: 0.95; font-size: 0.9rem; }
+  .banner-meta .badge { background: oklch(1 0 0 / 0.18); color: white; backdrop-filter: blur(4px); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    margin: 2rem 0 4rem;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  /* Steps */
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .step.active { border-color: var(--primary); box-shadow: 0 0 0 3px oklch(0.55 0.13 40 / 0.10); }
+  .step-head {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+  }
+  .step-num {
+    width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--surface-sunk); color: var(--foreground-muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.9rem;
+    font-family: var(--font-serif);
+  }
+  .step.done .step-num { background: var(--sage); color: white; }
+  .step.active .step-num { background: var(--primary); color: white; }
+  .step-title { flex: 1; }
+  .step-title h3 { font-size: 1.1rem; }
+  .step-title small { display: block; margin-top: 0.15rem; }
+  .step-body { padding: 0 1.5rem 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+  .step:not(.active) .step-body { display: none; }
+
+  /* Households table */
+  .household-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .household-row:last-child { border-bottom: 0; }
+  .household-row .who { flex: 1; }
+  .household-row .who h4 { font-size: 0.95rem; font-weight: 600; }
+  .household-row .who small { display: block; }
+
+  /* Date options */
+  .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+  .date-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    background: var(--surface-raised);
+  }
+  .date-card .range { font-family: var(--font-serif); font-size: 1.1rem; }
+  .date-card .votes { display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .vote-pill {
+    font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: var(--radius-pill);
+    background: var(--surface-sunk); color: var(--foreground-muted);
+  }
+  .vote-pill.yes { background: var(--sage-soft); color: var(--sage-foreground); }
+  .vote-pill.maybe { background: var(--accent-soft); color: var(--accent-foreground); }
+
+  /* Side rail */
+  .rail .card { margin-bottom: 1rem; }
+  .stat { display: flex; flex-direction: column; gap: 0.25rem; }
+  .stat .num { font-family: var(--font-serif); font-size: 2rem; line-height: 1; color: var(--primary); }
+  .stat .lbl { font-size: 0.85rem; color: var(--foreground-muted); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .countdown { text-align: center; padding: 1rem 0; }
+  .countdown .num { font-family: var(--font-serif); font-size: 3rem; color: var(--primary); line-height: 1; }
+  .countdown .lbl { color: var(--foreground-muted); font-size: 0.9rem; margin-top: 0.25rem; }
+
+  .updates-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+  .update {
+    display: flex; gap: 0.75rem;
+  }
+  .update .body {
+    flex: 1; background: var(--surface-raised); padding: 0.85rem 1rem; border-radius: var(--radius-md);
+  }
+  .update .body small { display: block; margin-bottom: 0.25rem; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="container between">
+    <div class="row">
+      <a href="dashboard.html" class="btn ghost sm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Dashboard
+      </a>
+    </div>
+    <div class="brand">Kin<span class="accent">Circle</span></div>
+    <span class="avatar">BZ</span>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="banner">
+    <img src="../../public/images/Outdoor_gathering_banner_ratio_219_prompt_wide_cin_8fd89a70be.jpeg" alt="" />
+    <div class="banner-content">
+      <div class="banner-meta">
+        <span class="badge">Aug 16, 2026 — locked</span>
+        <span class="badge">8 households</span>
+        <span class="badge">31 people</span>
+      </div>
+      <h1>Zimmerman Summer Reunion</h1>
+    </div>
+  </section>
+
+  <div class="layout">
+
+    <div>
+
+      <!-- STEP 1 -->
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-num">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <div class="step-title">
+            <h3>Invite households</h3>
+            <small class="muted">8 invited · 6 accepted · 2 pending</small>
+          </div>
+          <button class="btn ghost sm">Edit</button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-num">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <div class="step-title">
+            <h3>Pick a date</h3>
+            <small class="muted">Aug 16, 2026 — locked from 4 options</small>
+          </div>
+          <button class="btn ghost sm">Edit</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 — ACTIVE -->
+      <div class="step active">
+        <div class="step-head">
+          <span class="step-num">3</span>
+          <div class="step-title">
+            <h3>Choose a location</h3>
+            <small class="muted">We've suggested 3 spots based on where everyone lives</small>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="date-grid">
+            <div class="date-card" style="border-color: var(--primary);">
+              <small class="muted">Suggested · centered</small>
+              <div class="range">Lake Anna State Park</div>
+              <small>Spotsylvania, VA · avg. 1h 12min drive for 8 households</small>
+              <div style="margin-top: 0.75rem;">
+                <button class="btn sm">Lock this</button>
+              </div>
+            </div>
+            <div class="date-card">
+              <small class="muted">Option</small>
+              <div class="range">Aunt Phyllis's backyard</div>
+              <small>Richmond, VA · 1h 36min avg</small>
+            </div>
+            <div class="date-card">
+              <small class="muted">Option</small>
+              <div class="range">Pocahontas Pavilion B</div>
+              <small>Chesterfield, VA · 1h 28min avg</small>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button class="btn secondary sm">+ Suggest another spot</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step">
+        <div class="step-head">
+          <span class="step-num">4</span>
+          <div class="step-title">
+            <h3>Send the final plan</h3>
+            <small class="muted">Locks date + location, emails everyone the details</small>
+          </div>
+          <button class="btn ghost sm">Preview</button>
+        </div>
+      </div>
+
+      <!-- HOUSEHOLDS DETAIL -->
+      <div class="card" style="margin-top: 2rem;">
+        <div class="between">
+          <h3 style="font-family: var(--font-serif);">Households</h3>
+          <button class="btn secondary sm">+ Add household</button>
+        </div>
+        <hr class="divider" />
+
+        <div class="household-row">
+          <span class="avatar">ZF</span>
+          <div class="who">
+            <h4>The Zimmerman household (you)</h4>
+            <small class="muted">2 adults, 1 child · Brooklyn, NY</small>
+          </div>
+          <span class="badge sage">Hosting</span>
+        </div>
+
+        <div class="household-row">
+          <span class="avatar">PH</span>
+          <div class="who">
+            <h4>Aunt Phyllis</h4>
+            <small class="muted">1 adult · Richmond, VA</small>
+          </div>
+          <span class="badge sage">Yes · 1</span>
+        </div>
+
+        <div class="household-row">
+          <span class="avatar">MT</span>
+          <div class="who">
+            <h4>The Thompsons</h4>
+            <small class="muted">2 adults, 3 children · Atlanta, GA</small>
+          </div>
+          <span class="badge sage">Yes · 5</span>
+        </div>
+
+        <div class="household-row">
+          <span class="avatar">DC</span>
+          <div class="who">
+            <h4>Cousin Darius & Em</h4>
+            <small class="muted">2 adults · DC</small>
+          </div>
+          <span class="badge">Maybe</span>
+        </div>
+
+        <div class="household-row">
+          <span class="avatar" style="background: var(--surface-sunk); color: var(--foreground-muted);">?</span>
+          <div class="who">
+            <h4>Uncle Marcus</h4>
+            <small class="muted">marcus@example.com · invited Apr 12</small>
+          </div>
+          <button class="btn ghost sm">Resend</button>
+        </div>
+      </div>
+
+      <!-- UPDATES -->
+      <div class="card" style="margin-top: 1.25rem;">
+        <h3 style="font-family: var(--font-serif);">Announcements</h3>
+        <p class="muted" style="font-size: 0.9rem; margin-top: 0.25rem;">Everyone in the reunion sees these. Tap to post a new one.</p>
+        <div class="updates-list">
+          <div class="update">
+            <span class="avatar">BZ</span>
+            <div class="body">
+              <small><strong>You</strong> · 2 days ago</small>
+              We'll cover the main entree — please bring a side or dessert if you can.
+            </div>
+          </div>
+          <div class="update">
+            <span class="avatar">MT</span>
+            <div class="body">
+              <small><strong>Maya Thompson</strong> · 5 days ago</small>
+              Kids are SO excited. We'll bring the cornhole set.
+            </div>
+          </div>
+        </div>
+        <textarea class="textarea" rows="2" placeholder="Share something with the group..." style="margin-top: 1rem;"></textarea>
+        <div style="margin-top: 0.5rem; text-align: right;">
+          <button class="btn sm">Post update</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDE RAIL -->
+    <aside class="rail">
+      <div class="card">
+        <div class="countdown">
+          <div class="num">42</div>
+          <div class="lbl">days until Aug 16</div>
+        </div>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom: 1rem;">By the numbers</h4>
+        <div class="stat-grid">
+          <div class="stat"><span class="num">31</span><span class="lbl">people coming</span></div>
+          <div class="stat"><span class="num">8</span><span class="lbl">households</span></div>
+          <div class="stat"><span class="num">12</span><span class="lbl">kids</span></div>
+          <div class="stat"><span class="num">19</span><span class="lbl">adults</span></div>
+        </div>
+      </div>
+      <div class="card" style="background: var(--accent-soft); border-color: transparent;">
+        <h4 style="color: var(--accent-foreground);">Next up</h4>
+        <p style="font-size: 0.9rem; margin-top: 0.4rem; color: var(--accent-foreground);">Lock a location so we can email everyone the final plan.</p>
+        <button class="btn sm" style="margin-top: 0.75rem;">Choose location</button>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+</body>
+</html>

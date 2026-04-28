@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KinCircle — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" />
+<link rel="stylesheet" href="../tokens.css" />
+<style>
+  .hero {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-top: 2rem;
+    min-height: 280px;
+    display: flex; align-items: flex-end;
+    color: white;
+    box-shadow: var(--shadow-md);
+  }
+  .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 30%, oklch(0.2 0.02 50 / 0.7) 100%);
+  }
+  .hero-content {
+    position: relative; padding: 2rem; max-width: 600px;
+  }
+  .hero-content h1 { color: white; font-size: clamp(1.75rem, 3vw, 2.5rem); }
+  .hero-content p { color: oklch(0.95 0.01 85); margin-top: 0.5rem; }
+
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 3rem 0 1.25rem; }
+
+  .reunion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+  .reunion-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+  }
+  .reunion-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .reunion-card .thumb { aspect-ratio: 16/9; overflow: hidden; }
+  .reunion-card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .reunion-card .body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+  .reunion-card h3 { font-size: 1.2rem; }
+  .reunion-card .meta { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; color: var(--foreground-muted); font-size: 0.85rem; }
+
+  .progress {
+    height: 4px; background: var(--surface-sunk); border-radius: var(--radius-pill); overflow: hidden;
+  }
+  .progress > span { display: block; height: 100%; background: var(--accent); }
+
+  .create-card {
+    background: var(--surface-raised);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    align-items: flex-start; justify-content: center;
+    cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .create-card:hover { background: var(--surface); border-color: var(--primary); }
+  .create-card .icon {
+    width: 44px; height: 44px; border-radius: var(--radius-md);
+    background: var(--primary); color: var(--primary-foreground);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  .empty-tip {
+    background: var(--accent-soft); color: var(--accent-foreground);
+    padding: 1rem 1.25rem; border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="container between">
+    <div class="brand">Kin<span class="accent">Circle</span></div>
+    <div class="row">
+      <button class="btn ghost sm">Help</button>
+      <span class="avatar">BZ</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="hero">
+    <img src="../../public/images/Hero_image__ratio_169__prompt__a_candid_multigener_8d3011efec.jpeg" alt="" />
+    <div class="hero-content">
+      <h1>Welcome back, Brandon</h1>
+      <p>The Zimmerman family gathering is 6 weeks away — 4 households still need to RSVP.</p>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <h2>Your reunions</h2>
+    <button class="btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      New reunion
+    </button>
+  </div>
+
+  <div class="reunion-grid">
+
+    <a class="reunion-card" href="reunion-detail.html">
+      <div class="thumb">
+        <img src="../../public/images/Outdoor_gathering_banner_ratio_219_prompt_wide_cin_118004b7b1.jpeg" alt="" />
+      </div>
+      <div class="body">
+        <div class="row" style="justify-content: space-between;">
+          <span class="badge sage dot">Date locked</span>
+          <small>Aug 16, 2026</small>
+        </div>
+        <h3>Zimmerman Summer Reunion</h3>
+        <p class="muted">Hosted by you · 8 households · est. 31 people</p>
+        <div class="progress" style="margin-top:0.5rem"><span style="width: 75%"></span></div>
+        <small>Step 3 of 4 — pick a location</small>
+      </div>
+    </a>
+
+    <a class="reunion-card" href="#">
+      <div class="thumb">
+        <img src="../../public/images/Kids_grandparents_family_reunion_4a2cad3fce.jpeg" alt="" />
+      </div>
+      <div class="body">
+        <div class="row" style="justify-content: space-between;">
+          <span class="badge dot">Planning</span>
+          <small>3 dates open</small>
+        </div>
+        <h3>Aunt Phyllis's 80th</h3>
+        <p class="muted">Hosted by you · 5 households invited · 2 RSVPs in</p>
+        <div class="progress" style="margin-top:0.5rem"><span style="width: 30%"></span></div>
+        <small>Step 1 of 4 — collecting RSVPs</small>
+      </div>
+    </a>
+
+    <a class="reunion-card" href="#">
+      <div class="thumb">
+        <img src="../../public/images/Hands_passing_dishes_family_reunion_77205c2cd8.jpeg" alt="" />
+      </div>
+      <div class="body">
+        <div class="row" style="justify-content: space-between;">
+          <span class="badge muted dot">Member</span>
+          <small>Nov 23, 2026</small>
+        </div>
+        <h3>Cousins Friendsgiving</h3>
+        <p class="muted">Hosted by Maya · you said yes for 3</p>
+        <div class="progress" style="margin-top:0.5rem"><span style="width: 100%; background: var(--sage)"></span></div>
+        <small>Finalized — see plan</small>
+      </div>
+    </a>
+
+    <button class="create-card">
+      <div class="icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
+      <h3 style="margin:0">Start a new reunion</h3>
+      <p class="muted" style="text-align:left">Name it, invite the families, pick a date. Takes about 3 minutes.</p>
+    </button>
+
+  </div>
+
+  <div class="empty-tip">
+    <strong>Tip:</strong> KinCircle suggests a meeting location based on where everyone lives — once 3+ households share their address, you'll see a recommendation.
+  </div>
+
+</main>
+
+</body>
+</html>

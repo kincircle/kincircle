@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>You're invited — Zimmerman Summer Reunion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" />
+<link rel="stylesheet" href="../tokens.css" />
+<style>
+  body { background: var(--surface-sunk); }
+  .invite-shell { max-width: 720px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+  .invite-hero {
+    position: relative;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    overflow: hidden;
+    height: 320px;
+    margin: 0 -1rem 0;
+    box-shadow: var(--shadow-md);
+  }
+  .invite-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .invite-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 0%, oklch(0.2 0.03 50 / 0.7) 100%);
+  }
+  .invite-hero .content {
+    position: absolute; inset: auto 0 0 0;
+    padding: 2rem; color: white;
+  }
+  .invite-hero h1 { color: white; font-size: clamp(1.75rem, 4vw, 2.5rem); }
+  .invite-hero .host { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
+  .invite-hero .host .avatar { background: oklch(1 0 0 / 0.2); color: white; border-color: transparent; backdrop-filter: blur(6px); }
+  .invite-hero .host span { color: oklch(0.95 0.01 85); font-size: 0.95rem; }
+
+  .invite-card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    margin-top: -3rem;
+    position: relative;
+    box-shadow: var(--shadow-lg);
+  }
+  .invite-card .you {
+    text-align: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);
+  }
+  .invite-card .you small { display: block; }
+
+  .rsvp-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin: 1.5rem 0; }
+  .rsvp {
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .rsvp:hover { border-color: var(--border-strong); }
+  .rsvp.selected { border-color: var(--sage); background: var(--sage-soft); }
+  .rsvp .icon {
+    width: 36px; height: 36px; margin: 0 auto 0.4rem;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--surface-sunk); color: var(--foreground-muted);
+  }
+  .rsvp.selected .icon { background: var(--sage); color: white; }
+  .rsvp h4 { font-size: 0.95rem; }
+  .rsvp small { display: block; }
+
+  .section-h { font-family: var(--font-serif); font-size: 1.25rem; margin: 2rem 0 0.5rem; }
+
+  .members { display: flex; flex-direction: column; gap: 0.5rem; }
+  .member-row {
+    display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: center;
+  }
+
+  .date-vote-list { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem; }
+  .date-vote {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+  .date-vote .when { flex: 1; }
+  .date-vote .when .range { font-family: var(--font-serif); font-size: 1.05rem; }
+  .vote-buttons { display: flex; gap: 0.4rem; }
+  .vote-btn {
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer; font-size: 0.85rem;
+    color: var(--foreground-muted);
+  }
+  .vote-btn.selected.works { background: var(--sage); color: white; border-color: transparent; }
+  .vote-btn.selected.prefer { background: var(--accent); color: var(--accent-foreground); border-color: transparent; }
+  .vote-btn.selected.cant { background: var(--destructive-soft); color: var(--destructive); border-color: transparent; }
+
+  .footer-cta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="invite-shell">
+
+  <section class="invite-hero">
+    <img src="../../public/images/Kids_grandparents_family_reunion_4a2cad3fce.jpeg" alt="" />
+    <div class="content">
+      <div class="host">
+        <span class="avatar">BZ</span>
+        <span>Brandon Zimmerman invited you</span>
+      </div>
+      <h1>Zimmerman Summer Reunion</h1>
+    </div>
+  </section>
+
+  <div class="invite-card">
+
+    <div class="you">
+      <small>You're invited as</small>
+      <h2 style="margin-top: 0.25rem;">The Thompsons</h2>
+    </div>
+
+    <h3 class="section-h">Can you make it?</h3>
+    <div class="rsvp-row">
+      <button class="rsvp selected">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h4>Yes</h4>
+        <small>We're in</small>
+      </button>
+      <button class="rsvp">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <h4>Maybe</h4>
+        <small>Let me check</small>
+      </button>
+      <button class="rsvp">
+        <div class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+        <h4>No</h4>
+        <small>Can't this time</small>
+      </button>
+    </div>
+
+    <h3 class="section-h">Who's coming with you?</h3>
+    <p class="muted" style="font-size: 0.9rem;">Add each person so we can plan food and seating.</p>
+    <div class="members" style="margin-top: 0.85rem;">
+      <div class="member-row">
+        <input class="input" value="Maya Thompson" />
+        <select class="input"><option>Adult</option><option>Child</option></select>
+        <button class="btn ghost sm">Remove</button>
+      </div>
+      <div class="member-row">
+        <input class="input" value="Devon Thompson" />
+        <select class="input"><option>Adult</option><option>Child</option></select>
+        <button class="btn ghost sm">Remove</button>
+      </div>
+      <div class="member-row">
+        <input class="input" value="Sasha (8)" />
+        <select class="input"><option>Child</option><option>Adult</option></select>
+        <button class="btn ghost sm">Remove</button>
+      </div>
+      <div class="member-row">
+        <input class="input" placeholder="Add another..." />
+        <select class="input"><option>Adult</option><option>Child</option></select>
+        <span></span>
+      </div>
+    </div>
+
+    <h3 class="section-h">Where do you live?</h3>
+    <p class="muted" style="font-size: 0.9rem;">We use this to suggest a location everyone can reach. Only the city is shown to other households.</p>
+    <input class="input" value="2391 Peachtree Rd, Atlanta, GA 30309" style="margin-top: 0.85rem;" />
+
+    <h3 class="section-h">Which dates work for you?</h3>
+    <div class="date-vote-list">
+      <div class="date-vote">
+        <div class="when">
+          <div class="range">Aug 9 – 11, 2026</div>
+          <small class="muted">Friday – Sunday</small>
+        </div>
+        <div class="vote-buttons">
+          <button class="vote-btn selected works">Works</button>
+          <button class="vote-btn">Prefer</button>
+          <button class="vote-btn">Can't</button>
+        </div>
+      </div>
+      <div class="date-vote">
+        <div class="when">
+          <div class="range">Aug 16 – 18, 2026</div>
+          <small class="muted">Friday – Sunday</small>
+        </div>
+        <div class="vote-buttons">
+          <button class="vote-btn">Works</button>
+          <button class="vote-btn selected prefer">Prefer</button>
+          <button class="vote-btn">Can't</button>
+        </div>
+      </div>
+      <div class="date-vote">
+        <div class="when">
+          <div class="range">Aug 23 – 25, 2026</div>
+          <small class="muted">Friday – Sunday</small>
+        </div>
+        <div class="vote-buttons">
+          <button class="vote-btn">Works</button>
+          <button class="vote-btn">Prefer</button>
+          <button class="vote-btn selected cant">Can't</button>
+        </div>
+      </div>
+      <div class="date-vote">
+        <div class="when">
+          <div class="range">Aug 30 – Sep 1, 2026</div>
+          <small class="muted">Saturday – Monday (Labor Day)</small>
+        </div>
+        <div class="vote-buttons">
+          <button class="vote-btn">Works</button>
+          <button class="vote-btn">Prefer</button>
+          <button class="vote-btn">Can't</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-cta">
+      <small class="muted">You can come back and update any of this later.</small>
+      <button class="btn">Send my response</button>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

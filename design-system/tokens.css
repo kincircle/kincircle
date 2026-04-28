@@ -1,0 +1,55 @@
+/* KinCircle design tokens — single source of truth.
+   Variables only. No selectors, no rules.
+   See README.md for what each token is for. */
+
+:root {
+  /* === COLOR === */
+
+  /* Surfaces */
+  --bg: oklch(0.985 0.005 85);             /* warm cream — page bg */
+  --bg-warm: oklch(0.96 0.015 80);         /* slightly more saturated cream */
+  --muted: oklch(0.94 0.01 75);            /* linen — soft surfaces */
+
+  /* Text */
+  --ink: oklch(0.22 0.02 40);              /* warm near-black — body */
+  --ink-soft: oklch(0.42 0.025 45);        /* warm gray — secondary text */
+
+  /* Brand — terracotta */
+  --primary: oklch(0.55 0.13 40);
+  --primary-deep: oklch(0.42 0.12 38);     /* hover, deep emphasis */
+  --primary-soft: oklch(0.78 0.08 45);     /* dusty rose — soft borders */
+
+  /* Accent — honey */
+  --accent: oklch(0.78 0.13 75);
+  --accent-soft: oklch(0.94 0.06 80);
+  --accent-deep: oklch(0.65 0.14 70);      /* burnt honey */
+
+  /* Confirmed / yes — sage */
+  --sage: oklch(0.6 0.08 145);
+  --sage-soft: oklch(0.93 0.04 145);
+  --sage-foreground: oklch(0.32 0.07 145);
+
+  /* Lines */
+  --border: oklch(0.88 0.015 60);          /* taupe */
+  --border-strong: oklch(0.78 0.02 55);    /* hover borders */
+
+  /* Status */
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-soft: oklch(0.94 0.05 25);
+
+  /* === TYPE === */
+  --font-serif: var(--font-fraunces, "Fraunces"), "Source Serif Pro", Georgia, serif;
+  --font-sans: var(--font-nunito, "Nunito Sans"), "Avenir Next", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  /* === RADII === */
+  --radius-sm: 0.375rem;     /* chips, small inputs */
+  --radius-md: 0.625rem;     /* inputs, badges */
+  --radius-lg: 1rem;         /* cards */
+  --radius-xl: 1.5rem;       /* hero, marquee gaps */
+  --radius-pill: 9999px;     /* buttons, status badges */
+
+  /* === SHADOWS === */
+  --shadow-sm: 0 1px 2px oklch(0.3 0.05 40 / 0.08);
+  --shadow-md: 0 8px 24px oklch(0.3 0.05 40 / 0.10);
+  --shadow-lg: 0 24px 60px oklch(0.3 0.05 40 / 0.18);
+}

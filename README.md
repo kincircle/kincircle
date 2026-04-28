@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## KinCircle
+
+KinCircle is a family reunion planning app built with Next.js, Better Auth, Drizzle, and Railway.
+
+## Environment Model
+
+The source of truth for database structure is the code in `src/db/schema.ts` plus the checked-in Drizzle migrations in `src/db/migrations/`.
+
+Environment flow:
+
+- Local development targets Railway `development`
+- Reviewed migrations are applied to Railway `development` first
+- Production changes are promoted from the same migration files, not recreated manually
+- Production is never the default target for local commands
+
+Operational rules:
+
+- Use `railway environment development` for normal work
+- Use explicit `--environment production` when touching production on purpose
+- Do not edit schema directly in Railway; change code, review the generated migration, then apply it
 
 ## Getting Started
 
-First, run the development server:
+Start the app locally:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Useful commands:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run build
+npm run auth:info
+npm run db:generate
+npm run db:migrate
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+When applying a production migration, make the target explicit and switch back afterward:
 
-## Learn More
+```bash
+railway environment production
+npm run db:migrate
+railway environment development
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Railway
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Project: `kincircle`
+- Services: `web`, `Postgres`
+- Local `.env.local` should point at the `development` database, not `production`
+- Each Railway environment should have its `web` service `DATABASE_URL` wired to that environment's `Postgres` service
+- Railway deploy config lives in `railway.json`
+- Build command: `npm run build`
+- Pre-deploy migration command: `npm run db:migrate`
+- Start command: `npm run start`
+- Health check: `/api/health`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Required service variables:
 
-## Deploy on Vercel
+```bash
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+NEXT_PUBLIC_APP_URL=
+RESEND_API_KEY=
+EMAIL_FROM=
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Optional service variables:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+MAPBOX_ACCESS_TOKEN=
+```

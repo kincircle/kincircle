@@ -1,0 +1,72 @@
+/* KinCircle voice — typographic and decorative marks that carry the brand.
+   Depends on tokens.css. */
+
+/* Italic em-accent in headings — drop italic + primary into a key word.
+   Override per-section if you want a different color (e.g. honey on dark). */
+h1 em,
+h2 em,
+h3 em {
+  font-style: italic;
+  color: var(--primary);
+  font-weight: inherit;
+}
+
+/* Section eyebrow — italic serif tag with em-dash prefix.
+   Sits above .section-title. */
+.section-eyebrow {
+  display: inline-block;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--primary);
+  margin-bottom: 16px;
+  font-weight: 400;
+}
+.section-eyebrow::before {
+  content: '\2014\00a0';
+  color: var(--accent-deep);
+}
+
+/* Eyebrow pill — small tag with honey dot, sits above hero headings. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-bottom: 28px;
+  font-weight: 500;
+}
+.eyebrow-dot {
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink);
+  font-size: 0.7rem;
+}
+
+/* Underlined word — wraps a heading word with a skewed honey block.
+   Use one per heading max, on the most important word. */
+.underlined {
+  position: relative;
+  white-space: nowrap;
+}
+.underlined::after {
+  content: '';
+  position: absolute;
+  left: -2%;
+  bottom: 0.05em;
+  width: 104%;
+  height: 0.32em;
+  background: var(--accent);
+  z-index: -1;
+  border-radius: 4px;
+  transform: skew(-3deg);
+}
