@@ -221,3 +221,19 @@ export const reunionPhoto = pgTable("reunion_photo", {
   index("reunion_photo_uploaded_by_user_id_idx").on(table.uploadedByUserId),
   index("reunion_photo_reunion_created_at_idx").on(table.reunionId, table.createdAt),
 ]);
+
+// Relations
+export const reunionRelations = relations(reunion, ({ many }) => ({
+  potluckItems: many(potluckItem),
+}));
+
+export const potluckItemRelations = relations(potluckItem, ({ one }) => ({
+  reunion: one(reunion, {
+    fields: [potluckItem.reunionId],
+    references: [reunion.id],
+  }),
+  claimedByHousehold: one(household, {
+    fields: [potluckItem.claimedByHouseholdId],
+    references: [household.id],
+  }),
+}));

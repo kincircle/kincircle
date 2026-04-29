@@ -36,6 +36,13 @@
       "when": 1777425707827,
       "tag": "0004_careful_joystick",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777425994510,
+      "tag": "0005_closed_guardian",
+      "breakpoints": true
     }
   ]
 }
