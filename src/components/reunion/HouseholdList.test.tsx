@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("@/lib/actions/household", () => ({
@@ -89,6 +89,31 @@ describe("HouseholdList", () => {
         },
       ],
     },
+    {
+      id: "household-3",
+      reunionId: "reunion-1",
+      claimedByUserId: null,
+      primaryContactName: "Missing Email",
+      primaryContactEmail: null,
+      phone: null,
+      invitationStatus: "pending",
+      rsvpStatus: "pending",
+      claimedAt: null,
+      partySize: 1,
+      city: "Savannah",
+      state: "GA",
+      zipCode: null,
+      lat: null,
+      lng: null,
+      dietaryNeeds: null,
+      arrivalNotes: null,
+      departureNotes: null,
+      createdBy: "organizer-1",
+      lastEditedBy: null,
+      createdAt: "2026-03-14T12:00:00Z",
+      updatedAt: "2026-03-14T12:00:00Z",
+      members: [],
+    },
   ];
 
   beforeEach(() => {
@@ -111,6 +136,9 @@ describe("HouseholdList", () => {
     expect(
       screen.getByRole("button", { name: /Add Household/i })
     ).toBeInTheDocument();
+    expect(screen.getByText("Yes · 3")).toBeInTheDocument();
+    expect(screen.getByText("Atlanta, GA")).toBeInTheDocument();
+    expect(screen.getByText("1 adult, 1 child")).toBeInTheDocument();
   });
 
   it("opens create mode when add household is clicked", async () => {
@@ -134,27 +162,34 @@ describe("HouseholdList", () => {
       expect(screen.getByText("Jordan Smith")).toBeInTheDocument();
     });
 
-    const jordanCard = screen.getByText("Jordan Smith").closest("div");
-    const editButton = within(
-      jordanCard?.parentElement?.parentElement as HTMLElement
-    ).getByRole("button", { name: /Edit/i });
-
-    await user.click(editButton);
+    await user.click(
+      screen.getByRole("button", { name: /Edit Jordan Smith/i })
+    );
 
     expect(screen.getByTestId("household-dialog")).toHaveTextContent(
       "edit:Jordan Smith"
     );
   });
 
-  it("disables send invite when a household has no email", async () => {
-    render(<HouseholdList reunionId="reunion-1" />);
+  it("marks the organizer household as hosting", async () => {
+    render(<HouseholdList reunionId="reunion-1" organizerId="user-2" />);
 
     await waitFor(() => {
       expect(screen.getByText("No Email Family")).toBeInTheDocument();
     });
 
+    expect(screen.getByText("Hosting")).toBeInTheDocument();
+  });
+
+  it("disables resend when a pending household has no email", async () => {
+    render(<HouseholdList reunionId="reunion-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Missing Email")).toBeInTheDocument();
+    });
+
     const inviteButtons = screen.getAllByRole("button", {
-      name: /Send Invite/i,
+      name: /Resend/i,
     });
 
     expect(inviteButtons[0]).not.toBeDisabled();
@@ -169,9 +204,7 @@ describe("HouseholdList", () => {
       expect(screen.getByText("Jordan Smith")).toBeInTheDocument();
     });
 
-    await user.click(
-      screen.getAllByRole("button", { name: /Send Invite/i })[0]
-    );
+    await user.click(screen.getAllByRole("button", { name: /Resend/i })[0]);
 
     await waitFor(() => {
       expect(sendHouseholdInvite).toHaveBeenCalledWith("household-1");
@@ -187,7 +220,9 @@ describe("HouseholdList", () => {
       expect(screen.getByText("Jordan Smith")).toBeInTheDocument();
     });
 
-    await user.click(screen.getAllByRole("button", { name: /Delete/i })[0]);
+    await user.click(
+      screen.getByRole("button", { name: /Delete Jordan Smith/i })
+    );
 
     await waitFor(() => {
       expect(deleteHousehold).toHaveBeenCalledWith("household-1");

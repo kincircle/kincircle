@@ -2,29 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { HouseholdDialog, type HouseholdWithMembers } from "./HouseholdDialog";
 import { deleteHousehold, sendHouseholdInvite } from "@/lib/actions/household";
 import { expectArray, isRecord } from "@/lib/response";
-import {
-  Loader2,
-  Mail,
-  MapPin,
-  Pencil,
-  Phone,
-  Plus,
-  Trash2,
-  UserCheck,
-  Users,
-} from "lucide-react";
+import { Loader2, Mail, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import type { HouseholdMember } from "@/types";
 
@@ -35,99 +16,97 @@ interface HouseholdListProps {
   organizerId?: string;
 }
 
-// Returns the primary status badge for a household row using design-system badge classes.
-// Priority: rsvp status > invitation status (pending = no rsvp yet).
-function householdBadge(household: HouseholdWithMembers): { className: string; label: string } | null {
-  const { rsvpStatus, invitationStatus } = household;
+interface HouseholdStatus {
+  className: string;
+  label: string;
+}
 
-  if (rsvpStatus === "yes") {
-    return { className: "badge sage", label: "Coming" };
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function householdInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
+function locationLabel(household: HouseholdWithMembers) {
+  return [household.city, household.state].filter(Boolean).join(", ");
+}
+
+function householdMeta(household: HouseholdWithMembers) {
+  const location = locationLabel(household);
+
+  if (household.members.length === 0) {
+    return location || household.primaryContactEmail || pluralize(household.partySize, "guest");
   }
-  if (rsvpStatus === "maybe") {
+
+  const adultCount =
+    1 + household.members.filter((member) => member.ageGroup === "adult").length;
+  const childCount = household.members.filter(
+    (member) => member.ageGroup === "child"
+  ).length;
+  const people = [pluralize(adultCount, "adult")];
+  if (childCount > 0) {
+    people.push(pluralize(childCount, "child", "children"));
+  }
+
+  return [people.join(", "), location].filter(Boolean).join(" · ");
+}
+
+function isOrganizerHousehold(
+  household: HouseholdWithMembers,
+  organizerId?: string
+) {
+  return Boolean(organizerId && household.claimedByUserId === organizerId);
+}
+
+function shouldShowResend(
+  household: HouseholdWithMembers,
+  organizerId?: string
+) {
+  return (
+    !isOrganizerHousehold(household, organizerId) &&
+    household.invitationStatus === "pending" &&
+    !household.claimedAt &&
+    !household.claimedByUserId
+  );
+}
+
+function householdStatus(
+  household: HouseholdWithMembers,
+  organizerId?: string
+): HouseholdStatus {
+  if (isOrganizerHousehold(household, organizerId)) {
+    return { className: "badge sage", label: "Hosting" };
+  }
+
+  if (household.rsvpStatus === "yes") {
+    return {
+      className: "badge sage",
+      label: `Yes · ${household.partySize}`,
+    };
+  }
+  if (household.rsvpStatus === "maybe") {
     return { className: "badge", label: "Maybe" };
   }
-  if (rsvpStatus === "no") {
-    // rsvp "no" → muted / no badge; handled inline with strikethrough text
-    return null;
+  if (household.rsvpStatus === "no") {
+    return { className: "badge muted", label: "Can't make it" };
   }
-  // rsvp still pending — show invite status
-  if (invitationStatus === "pending") {
-    return { className: "badge muted", label: "Pending" };
+  if (!household.claimedAt && household.invitationStatus === "not_sent") {
+    return { className: "badge muted", label: "?" };
   }
-  if (invitationStatus === "accepted") {
-    // claimed row — status text carries the message; no extra badge needed
-    return null;
+  if (household.invitationStatus === "revoked") {
+    return { className: "badge muted", label: "Revoked" };
   }
-  if (invitationStatus === "not_sent") {
-    return { className: "badge muted", label: "Not sent" };
+  if (household.invitationStatus === "expired") {
+    return { className: "badge muted", label: "Expired" };
   }
-  if (invitationStatus === "revoked" || invitationStatus === "expired") {
-    return { className: "badge muted", label: invitationStatus === "revoked" ? "Revoked" : "Expired" };
-  }
-  return null;
-}
 
-function rsvpBadgeClass(status: string) {
-  switch (status) {
-    case "yes":
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800";
-    case "no":
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
-    case "maybe":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800";
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-200 dark:border-gray-800";
-  }
-}
-
-function rsvpLabel(status: string) {
-  switch (status) {
-    case "yes":
-      return "Attending";
-    case "no":
-      return "Not Attending";
-    case "maybe":
-      return "Maybe";
-    default:
-      return "Pending";
-  }
-}
-
-function inviteBadgeClass(status: string) {
-  switch (status) {
-    case "accepted":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800";
-    case "pending":
-      return "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200 dark:border-slate-800";
-    case "revoked":
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
-    case "expired":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800";
-    default:
-      return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300 border-gray-200 dark:border-gray-800";
-  }
-}
-
-function invitationLabel(status: string) {
-  switch (status) {
-    case "not_sent":
-      return "Not sent";
-    case "pending":
-      return "Pending";
-    case "accepted":
-      return "Accepted";
-    case "revoked":
-      return "Revoked";
-    case "expired":
-      return "Expired";
-    default:
-      return status;
-  }
-}
-
-
-function organizerSourceLabel(household: HouseholdWithMembers) {
-  return household.createdBy ? "Organizer added" : "Self-registered";
+  return { className: "badge muted", label: "Pending" };
 }
 
 export function HouseholdList({ reunionId, organizerId }: HouseholdListProps) {
@@ -238,124 +217,90 @@ export function HouseholdList({ reunionId, organizerId }: HouseholdListProps) {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8 text-muted-foreground">
+      <div className="card">
+        <div className="muted flex items-center justify-center py-8">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading households...
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Households ({households.length})
-              </CardTitle>
-              <CardDescription>
-                Manage organizer-created households, RSVP households, and
-                invitations.
-              </CardDescription>
+      <div className="card">
+        <div className="between flex-col items-start sm:flex-row sm:items-center">
+          <div>
+            <span className="section-eyebrow">Guest list</span>
+            <div className="row">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
+                <Users className="h-4 w-4" />
+              </span>
+              <h3 className="text-xl">Households</h3>
+              <span className="badge muted">{households.length}</span>
             </div>
-            <Button onClick={handleAddHousehold}>
-              <Plus className="h-4 w-4" />
-              Add Household
-            </Button>
           </div>
-        </CardHeader>
+          <button
+            type="button"
+            className="btn secondary sm"
+            onClick={handleAddHousehold}
+          >
+            <Plus className="h-4 w-4" />
+            Add household
+          </button>
+        </div>
 
-        <CardContent>
-          {households.length === 0 ? (
-            <div className="py-8 text-center">
-              <Users className="mx-auto h-10 w-10 text-muted-foreground/40" />
-              <p className="mt-2 text-sm text-muted-foreground">
-                No households yet. Add one to start managing attendees directly.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {households.map((household) => (
-                <div
-                  key={household.id}
-                  className="rounded-lg border p-4 space-y-4"
-                >
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={
-                            household.rsvpStatus === "no"
-                              ? "font-medium truncate line-through text-muted-foreground"
-                              : "font-medium truncate"
-                          }
-                        >
-                          {household.primaryContactName}
-                        </span>
-                        {/* Design-system primary badge: Hosting (organizer's household) */}
-                        {organizerId && household.claimedByUserId === organizerId && (
-                          <span className="badge sage">Hosting</span>
-                        )}
-                        {/* Design-system status badge: Coming / Maybe / Pending etc. */}
-                        {(() => {
-                          const badge = householdBadge(household);
-                          return badge ? (
-                            <span className={badge.className}>{badge.label}</span>
-                          ) : null;
-                        })()}
-                        {/* Existing shadcn detail badges (claimed state, source, invite, rsvp) */}
-                        {household.claimedAt && (
-                          <Badge variant="outline">
-                            <UserCheck className="h-3 w-3" />
-                            Claimed
-                          </Badge>
-                        )}
-                        <Badge variant="outline">
-                          {organizerSourceLabel(household)}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={inviteBadgeClass(household.invitationStatus)}
-                        >
-                          Invite: {invitationLabel(household.invitationStatus)}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={rsvpBadgeClass(household.rsvpStatus)}
-                        >
-                          {rsvpLabel(household.rsvpStatus)}
-                        </Badge>
-                      </div>
+        <hr className="divider" />
 
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        {household.primaryContactEmail && (
-                          <p className="truncate">{household.primaryContactEmail}</p>
-                        )}
-                        {household.phone && (
-                          <p className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {household.phone}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+        {households.length === 0 ? (
+          <div className="py-8 text-center">
+            <Users className="mx-auto h-10 w-10 text-[var(--ink-soft)] opacity-40" />
+            <p className="muted mt-2 text-sm">
+              No households yet. Add one to start managing attendees directly.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {households.map((household) => {
+              const status = householdStatus(household, organizerId);
+              const showResend = shouldShowResend(household, organizerId);
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditHousehold(household)}
+              return (
+                <div className="household-row" key={household.id}>
+                  <button
+                    type="button"
+                    className="household-row-main"
+                    onClick={() => handleEditHousehold(household)}
+                    aria-label={`Edit ${household.primaryContactName}`}
+                  >
+                    <span
+                      className={
+                        showResend ? "avatar muted household-avatar-pending" : "avatar"
+                      }
+                    >
+                      {showResend
+                        ? "?"
+                        : householdInitials(household.primaryContactName)}
+                    </span>
+                    <span className="who">
+                      <span
+                        className={
+                          household.rsvpStatus === "no"
+                            ? "household-name line-through"
+                            : "household-name"
+                        }
                       >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                        {household.primaryContactName}
+                      </span>
+                      <small className="muted">{householdMeta(household)}</small>
+                    </span>
+                  </button>
+
+                  <div className="household-row-actions">
+                    {showResend ? (
+                      <button
+                        type="button"
+                        className="btn ghost sm disabled:pointer-events-none disabled:opacity-50"
                         disabled={
                           !household.primaryContactEmail ||
                           invitingId === household.id ||
@@ -368,63 +313,32 @@ export function HouseholdList({ reunionId, organizerId }: HouseholdListProps) {
                         ) : (
                           <Mail className="h-3.5 w-3.5" />
                         )}
-                        Send Invite
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={deletingId === household.id}
-                        onClick={() => handleDeleteHousehold(household)}
-                      >
-                        {deletingId === household.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3.5 w-3.5" />
-                        )}
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    <span>Party of {household.partySize}</span>
-                    {(household.city || household.state) && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {[household.city, household.state].filter(Boolean).join(", ")}
-                      </span>
+                        Resend
+                      </button>
+                    ) : (
+                      <span className={status.className}>{status.label}</span>
                     )}
-                  </div>
 
-                  {household.members.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Members</p>
-                      <div className="space-y-1">
-                        {household.members.map((member) => (
-                          <div
-                            key={member.id}
-                            className="flex items-center gap-2 text-sm text-muted-foreground pl-2"
-                          >
-                            <span className="h-1 w-1 rounded-full bg-muted-foreground/40 shrink-0" />
-                            <span>{member.name}</span>
-                            <span className="text-xs">
-                              ({member.ageGroup}
-                              {member.age !== null && member.age !== undefined
-                                ? `, ${member.age}`
-                                : ""}
-                              )
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      className="btn ghost sm h-8 w-8 px-0 text-[var(--ink-soft)] hover:text-[var(--destructive)] disabled:pointer-events-none disabled:opacity-50"
+                      disabled={deletingId === household.id}
+                      onClick={() => handleDeleteHousehold(household)}
+                      aria-label={`Delete ${household.primaryContactName}`}
+                    >
+                      {deletingId === household.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <HouseholdDialog
         reunionId={reunionId}

@@ -448,6 +448,75 @@
   border: 1px solid var(--border);
 }
 
+/* === HOUSEHOLD ROWS === */
+.household-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.household-row:last-child {
+  border-bottom: 0;
+}
+.household-row-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.household-row-main:hover .household-name {
+  color: var(--primary);
+}
+.household-row .who {
+  min-width: 0;
+  flex: 1;
+}
+.household-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.household-row .who small {
+  display: block;
+  margin-top: 0.15rem;
+}
+.household-row-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.household-avatar-pending {
+  background: var(--muted);
+  color: var(--ink-soft);
+}
+@media (max-width: 640px) {
+  .household-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .household-row-main {
+    flex-basis: 100%;
+  }
+  .household-row-actions {
+    width: 100%;
+    padding-left: 52px;
+  }
+}
+
 /* === VOICE === */
 h1 em,
 h2 em,
