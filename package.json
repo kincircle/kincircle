@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:isolated": "node scripts/dev-isolated.mjs",
     "build": "next build --webpack && npm run build:standalone-assets",
     "build:standalone-assets": "mkdir -p .next/standalone/.next/static .next/standalone/public && cp -R public/. .next/standalone/public && cp -R .next/static/. .next/standalone/.next/static",
     "start": "node .next/standalone/server.js",
