@@ -173,10 +173,16 @@
    Primitives + voice — pulled from /design-system/.
    ============================================================ */
 
+/* === TEXT UTILITIES === */
+.muted { color: var(--ink-soft); }
+.subtle { color: oklch(0.6 0.018 50); }
+
 /* === BUTTON === */
+.btn,
 .btn-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 11px 22px;
   border-radius: var(--radius-pill);
@@ -188,25 +194,85 @@
   border: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   white-space: nowrap;
+  background: var(--primary);
+  color: var(--bg);
+  box-shadow: 0 1px 0 var(--primary-deep) inset, var(--shadow-sm);
 }
+.btn.primary,
 .btn-pill.primary {
   background: var(--primary);
   color: var(--bg);
   box-shadow: 0 1px 0 var(--primary-deep) inset, var(--shadow-sm);
 }
+.btn:hover,
+.btn-pill:hover,
+.btn.primary:hover,
 .btn-pill.primary:hover {
   background: var(--primary-deep);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
+.btn.secondary,
+.btn-pill.secondary {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.btn.secondary:hover,
+.btn-pill.secondary:hover {
+  background: var(--bg-warm);
+  border-color: var(--border-strong);
+  box-shadow: none;
+  transform: none;
+}
+.btn.ghost,
 .btn-pill.ghost {
   background: transparent;
   color: var(--ink);
   border: 1px solid var(--border);
+  box-shadow: none;
 }
+.btn.ghost:hover,
 .btn-pill.ghost:hover {
   border-color: var(--primary);
   color: var(--primary);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.btn.sm,
+.btn-pill.sm {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+/* === BADGE === */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.badge.sage { background: var(--sage-soft); color: var(--sage-foreground); }
+.badge.muted { background: var(--muted); color: var(--ink-soft); }
+.badge.on-photo {
+  background: oklch(1 0 0 / 0.18);
+  color: white;
+  backdrop-filter: blur(4px);
+}
+.badge.dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
 }
 
 /* === STATUS BADGE === */
@@ -220,6 +286,33 @@
 .status-pending { background: var(--muted); color: var(--ink-soft); }
 .status-voted   { background: oklch(0.94 0.10 75); color: oklch(0.45 0.13 65); }
 .status-sage    { background: var(--sage-soft); color: var(--sage-foreground); }
+
+/* === CARD === */
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+.card.raised {
+  box-shadow: var(--shadow-md);
+  border-color: transparent;
+}
+
+/* === AVATAR === */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+}
 
 /* === VOICE === */
 h1 em,

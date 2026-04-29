@@ -6,13 +6,6 @@ import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import Image from "next/image";
 import { Header } from "@/components/layout/Header";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { InviteSection } from "@/components/reunion/InviteSection";
 import { HouseholdList } from "@/components/reunion/HouseholdList";
 import { DateOptionsSection } from "@/components/reunion/DateOptionsSection";
@@ -20,7 +13,7 @@ import { VotingSection } from "@/components/reunion/VotingSection";
 import { LocationSection } from "@/components/reunion/LocationSection";
 import { StatusSection } from "@/components/reunion/StatusSection";
 import { UpdatesSection } from "@/components/reunion/UpdatesSection";
-import { ArrowLeft, CalendarDays, Home, Users } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 const FALLBACK_HERO_IMAGE_URL =
@@ -48,6 +41,76 @@ function formatLockedDate(dateStr: string | null): string {
     day: "numeric",
     year: "numeric",
   })} locked`;
+}
+
+function formatLockedDateShort(dateStr: string | null): string {
+  if (!dateStr) {
+    return "date TBD";
+  }
+
+  const date = new Date(`${dateStr}T00:00:00`);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const date = new Date(`${dateStr}T00:00:00`);
+  return Math.max(
+    0,
+    Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  );
+}
+
+function getNextUpNudge(
+  status: string,
+  householdCount: number,
+  isOrganizer: boolean
+) {
+  if (!isOrganizer) {
+    return {
+      text: "Review the latest details and updates from the organizer.",
+      href: "#reunion-updates",
+      cta: "Read updates",
+    };
+  }
+
+  if (status === "date_locked") {
+    return {
+      text: "Choose a location so the final plan can go out to everyone.",
+      href: "#reunion-location",
+      cta: "Choose location",
+    };
+  }
+
+  if (status === "finalized") {
+    return {
+      text: "The final plan is ready for the family.",
+      href: "#reunion-updates",
+      cta: "Post update",
+    };
+  }
+
+  if (householdCount === 0) {
+    return {
+      text: "Add households so your family can start voting on dates.",
+      href: "#reunion-invite",
+      cta: "Add households",
+    };
+  }
+
+  return {
+    text: "Add date options and invite households to vote.",
+    href: "#reunion-dates",
+    cta: "Pick dates",
+  };
 }
 
 export default async function ReunionDetailPage({
@@ -95,23 +158,26 @@ export default async function ReunionDetailPage({
           householdCount === 1 ? "" : "s"
         } have responded`
       : "No households yet";
+  const countdownDays = daysUntil(found.lockedDate);
+  const nextUp = getNextUpNudge(found.status, householdCount, isOrganizer);
+  const pendingCount = Math.max(householdCount - respondedCount, 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6 sm:py-8">
-          <div className="mb-5">
+        <div className="mx-auto max-w-[1180px] px-6 py-6 sm:py-8">
+          <div className="mb-6">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              className="btn ghost sm"
             >
               <ArrowLeft className="h-4 w-4" />
               Dashboard
             </Link>
           </div>
 
-          <section className="relative overflow-hidden rounded-[var(--radius-xl)] bg-muted shadow-md">
+          <section className="relative h-[220px] overflow-hidden rounded-[var(--radius-xl)] bg-muted shadow-[var(--shadow-md)] sm:h-[240px]">
             <Image
               src={heroImageUrl}
               alt=""
@@ -121,25 +187,25 @@ export default async function ReunionDetailPage({
               unoptimized={heroImageUrl.startsWith("http")}
               className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/70" />
-            <div className="relative flex min-h-[14rem] flex-col justify-end gap-4 p-5 text-white sm:min-h-[17rem] sm:p-8">
-              <div className="flex flex-wrap gap-2">
-                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-b from-black/15 to-black/65" />
+            <div className="relative flex h-full flex-col justify-end gap-2 p-6 text-white sm:px-8">
+              <div className="flex flex-wrap gap-3 text-sm">
+                <span className="badge on-photo">
                   {statusLabels[found.status]}
-                </Badge>
-                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                </span>
+                <span className="badge on-photo">
                   {formatLockedDate(found.lockedDate)}
-                </Badge>
-                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                </span>
+                <span className="badge on-photo">
                   {pluralize(householdCount, "household")}
-                </Badge>
-                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                </span>
+                <span className="badge on-photo">
                   {pluralize(totalPartySize, "person", "people")}
-                </Badge>
+                </span>
               </div>
 
               <div className="max-w-3xl">
-                <h1 className="text-3xl font-medium text-white sm:text-4xl lg:text-5xl">
+                <h1 className="font-serif text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-tight text-white">
                   {found.name}
                 </h1>
                 {found.description && (
@@ -151,73 +217,112 @@ export default async function ReunionDetailPage({
             </div>
           </section>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="my-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-6">
               {isOrganizer ? (
                 <>
-                  <StatusSection reunionId={id} currentStatus={found.status} />
-                  <InviteSection reunionId={id} />
-                  <DateOptionsSection reunionId={id} />
-                  <LocationSection reunionId={id} />
+                  <section id="reunion-status">
+                    <StatusSection reunionId={id} currentStatus={found.status} />
+                  </section>
+                  <section id="reunion-invite">
+                    <InviteSection reunionId={id} />
+                  </section>
+                  <section id="reunion-dates">
+                    <DateOptionsSection reunionId={id} />
+                  </section>
+                  <section id="reunion-location">
+                    <LocationSection reunionId={id} />
+                  </section>
                 </>
               ) : (
                 <>
-                  <VotingSection reunionId={id} />
-                  <LocationSection reunionId={id} />
+                  <section id="reunion-dates">
+                    <VotingSection reunionId={id} />
+                  </section>
+                  <section id="reunion-location">
+                    <LocationSection reunionId={id} />
+                  </section>
                 </>
               )}
             </div>
 
-            <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Reunion Snapshot</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  <div className="flex items-start gap-3">
-                    <CalendarDays className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">
-                        {formatLockedDate(found.lockedDate)}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {statusLabels[found.status]} status
-                      </p>
-                    </div>
+            <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+              <div className="card">
+                <div className="py-4 text-center">
+                  <div className="font-serif text-5xl leading-none text-[var(--primary)]">
+                    {countdownDays ?? "--"}
                   </div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {countdownDays === null
+                      ? "days until date is locked"
+                      : `days until ${formatLockedDateShort(found.lockedDate)}`}
+                  </div>
+                </div>
+              </div>
 
-                  <div className="flex items-start gap-3">
-                    <Users className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{responseSummary}</p>
-                      <p className="text-muted-foreground">
-                        {pluralize(totalPartySize, "person", "people")} across{" "}
-                        {pluralize(householdCount, "household")}
-                      </p>
-                    </div>
+              <div className="card">
+                <h4 className="mb-4 text-base">By the numbers</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
+                      {totalPartySize}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      people
+                    </span>
                   </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
+                      {householdCount}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      households
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
+                      {respondedCount}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      responded
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
+                      {pendingCount}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      pending
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-                  <div className="flex items-start gap-3">
-                    <Home className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">
-                        {isOrganizer ? "Organizer view" : "Household view"}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {isOrganizer
-                          ? "You are the organizer of this reunion."
-                          : "Vote on dates, review location details, and read updates."}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="card border-transparent bg-[var(--accent-soft)]">
+                <h4 className="text-base text-[var(--accent-foreground)]">
+                  Next up
+                </h4>
+                <p className="mt-2 text-sm text-[var(--accent-foreground)]">
+                  {nextUp.text}
+                </p>
+                <a href={nextUp.href} className="btn sm mt-4">
+                  {nextUp.cta}
+                </a>
+              </div>
+
+              <p className="px-1 text-sm text-muted-foreground">
+                {isOrganizer
+                  ? "You are the organizer of this reunion."
+                  : responseSummary}
+              </p>
             </aside>
           </div>
 
-          <div className="mt-8 space-y-6">
+          <div className="space-y-6">
             {isOrganizer && <HouseholdList reunionId={id} />}
-            <UpdatesSection reunionId={id} isOrganizer={isOrganizer} />
+            <section id="reunion-updates">
+              <UpdatesSection reunionId={id} isOrganizer={isOrganizer} />
+            </section>
           </div>
         </div>
       </main>
