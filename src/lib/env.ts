@@ -35,6 +35,24 @@ export function getMapboxAccessToken(): string | undefined {
   return readOptionalServerEnv("MAPBOX_ACCESS_TOKEN");
 }
 
+export function getCloudinaryCloudName(): string {
+  return readRequiredServerEnv(
+    "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
+    "Cloudinary upload signing"
+  );
+}
+
+export function getCloudinaryApiKey(): string {
+  return readRequiredServerEnv("CLOUDINARY_API_KEY", "Cloudinary upload signing");
+}
+
+export function getCloudinaryApiSecret(): string {
+  return readRequiredServerEnv(
+    "CLOUDINARY_API_SECRET",
+    "Cloudinary upload signing"
+  );
+}
+
 export function getGoogleOAuthConfig():
   | {
       clientId: string;

@@ -80,6 +80,8 @@ export const reunion = pgTable("reunion", {
   lockedLocationName: text("locked_location_name"),
   lockedLocationLat: doublePrecision("locked_location_lat"),
   lockedLocationLng: doublePrecision("locked_location_lng"),
+  heroImageUrl: text("hero_image_url"),
+  heroImagePublicId: text("hero_image_public_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
@@ -157,6 +159,8 @@ export const dateOption = pgTable("date_option", {
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   description: text("description"),
+  imageUrl: text("image_url"),
+  imagePublicId: text("image_public_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   index("date_option_reunion_id_idx").on(table.reunionId),
@@ -183,4 +187,20 @@ export const reunionUpdate = pgTable("reunion_update", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   index("reunion_update_reunion_id_idx").on(table.reunionId),
+]);
+
+export const reunionPhoto = pgTable("reunion_photo", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reunionId: uuid("reunion_id").notNull().references(() => reunion.id, { onDelete: "cascade" }),
+  uploadedByUserId: text("uploaded_by_user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  publicId: text("public_id").notNull(),
+  caption: text("caption"),
+  width: integer("width"),
+  height: integer("height"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("reunion_photo_reunion_id_idx").on(table.reunionId),
+  index("reunion_photo_uploaded_by_user_id_idx").on(table.uploadedByUserId),
+  index("reunion_photo_reunion_created_at_idx").on(table.reunionId, table.createdAt),
 ]);
