@@ -4,9 +4,15 @@ import { reunion, household } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
+import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { InviteSection } from "@/components/reunion/InviteSection";
 import { HouseholdList } from "@/components/reunion/HouseholdList";
 import { DateOptionsSection } from "@/components/reunion/DateOptionsSection";
@@ -14,7 +20,11 @@ import { VotingSection } from "@/components/reunion/VotingSection";
 import { LocationSection } from "@/components/reunion/LocationSection";
 import { StatusSection } from "@/components/reunion/StatusSection";
 import { UpdatesSection } from "@/components/reunion/UpdatesSection";
+import { ArrowLeft, CalendarDays, Home, Users } from "lucide-react";
 import Link from "next/link";
+
+const FALLBACK_HERO_IMAGE_URL =
+  "/images/Outdoor_gathering_banner_ratio_219_prompt_wide_cin_8fd89a70be.jpeg";
 
 const statusLabels: Record<string, string> = {
   planning: "Planning",
@@ -23,15 +33,22 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-const statusVariants: Record<
-  string,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  planning: "secondary",
-  date_locked: "default",
-  finalized: "outline",
-  cancelled: "destructive",
-};
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function formatLockedDate(dateStr: string | null): string {
+  if (!dateStr) {
+    return "Date not locked";
+  }
+
+  const date = new Date(`${dateStr}T00:00:00`);
+  return `${date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })} locked`;
+}
 
 export default async function ReunionDetailPage({
   params,
@@ -67,78 +84,142 @@ export default async function ReunionDetailPage({
   const respondedCount = households.filter(
     (h) => h.rsvpStatus !== "pending"
   ).length;
+  const totalPartySize = households.reduce(
+    (sum, h) => sum + (h.partySize ?? 1),
+    0
+  );
+  const heroImageUrl = found.heroImageUrl || FALLBACK_HERO_IMAGE_URL;
+  const responseSummary =
+    householdCount > 0
+      ? `${respondedCount} of ${householdCount} household${
+          householdCount === 1 ? "" : "s"
+        } have responded`
+      : "No households yet";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:underline"
-          >
-            &larr; Back to Dashboard
-          </Link>
-        </div>
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">{found.name}</h1>
-            {found.description && (
-              <p className="text-muted-foreground mt-2">{found.description}</p>
-            )}
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="mb-5">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Dashboard
+            </Link>
           </div>
-          <Badge variant={statusVariants[found.status]}>
-            {statusLabels[found.status]}
-          </Badge>
-        </div>
 
-        {isOrganizer && (
-          <div className="text-sm text-muted-foreground mb-4">
-            You are the organizer of this reunion.
+          <section className="relative overflow-hidden rounded-[var(--radius-xl)] bg-muted shadow-md">
+            <Image
+              src={heroImageUrl}
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 1280px) 1200px, calc(100vw - 2rem)"
+              unoptimized={heroImageUrl.startsWith("http")}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/70" />
+            <div className="relative flex min-h-[14rem] flex-col justify-end gap-4 p-5 text-white sm:min-h-[17rem] sm:p-8">
+              <div className="flex flex-wrap gap-2">
+                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                  {statusLabels[found.status]}
+                </Badge>
+                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                  {formatLockedDate(found.lockedDate)}
+                </Badge>
+                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                  {pluralize(householdCount, "household")}
+                </Badge>
+                <Badge className="border-white/20 bg-white/20 text-white backdrop-blur-sm">
+                  {pluralize(totalPartySize, "person", "people")}
+                </Badge>
+              </div>
+
+              <div className="max-w-3xl">
+                <h1 className="text-3xl font-medium text-white sm:text-4xl lg:text-5xl">
+                  {found.name}
+                </h1>
+                {found.description && (
+                  <p className="mt-3 max-w-2xl text-sm text-white/85 sm:text-base">
+                    {found.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="space-y-6">
+              {isOrganizer ? (
+                <>
+                  <StatusSection reunionId={id} currentStatus={found.status} />
+                  <InviteSection reunionId={id} />
+                  <DateOptionsSection reunionId={id} />
+                  <LocationSection reunionId={id} />
+                </>
+              ) : (
+                <>
+                  <VotingSection reunionId={id} />
+                  <LocationSection reunionId={id} />
+                </>
+              )}
+            </div>
+
+            <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Reunion Snapshot</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div className="flex items-start gap-3">
+                    <CalendarDays className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">
+                        {formatLockedDate(found.lockedDate)}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {statusLabels[found.status]} status
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Users className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{responseSummary}</p>
+                      <p className="text-muted-foreground">
+                        {pluralize(totalPartySize, "person", "people")} across{" "}
+                        {pluralize(householdCount, "household")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Home className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">
+                        {isOrganizer ? "Organizer view" : "Household view"}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {isOrganizer
+                          ? "You are the organizer of this reunion."
+                          : "Vote on dates, review location details, and read updates."}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </aside>
           </div>
-        )}
 
-        {householdCount > 0 && (
-          <p className="text-sm text-muted-foreground mb-6">
-            {respondedCount} of {householdCount} household
-            {householdCount !== 1 ? "s" : ""} have responded
-          </p>
-        )}
-
-        {isOrganizer && (
-          <>
-            <Separator className="my-6" />
-            <StatusSection reunionId={id} currentStatus={found.status} />
-
-            <Separator className="my-6" />
-            <InviteSection reunionId={id} />
-
-            <Separator className="my-6" />
-            <HouseholdList reunionId={id} />
-
-            <Separator className="my-6" />
-            <DateOptionsSection reunionId={id} />
-
-            <Separator className="my-6" />
-            <LocationSection reunionId={id} />
-
-            <Separator className="my-6" />
-            <UpdatesSection reunionId={id} isOrganizer={true} />
-          </>
-        )}
-
-        {!isOrganizer && (
-          <>
-            <Separator className="my-6" />
-            <VotingSection reunionId={id} />
-
-            <Separator className="my-6" />
-            <LocationSection reunionId={id} />
-
-            <Separator className="my-6" />
-            <UpdatesSection reunionId={id} isOrganizer={false} />
-          </>
-        )}
+          <div className="mt-8 space-y-6">
+            {isOrganizer && <HouseholdList reunionId={id} />}
+            <UpdatesSection reunionId={id} isOrganizer={isOrganizer} />
+          </div>
+        </div>
       </main>
     </div>
   );
