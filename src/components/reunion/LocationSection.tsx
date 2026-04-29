@@ -9,6 +9,7 @@ import { expectArrayField, expectRecord } from "@/lib/response";
 interface LocationSectionProps {
   reunionId: string;
   isOrganizer?: boolean;
+  embedded?: boolean;
 }
 
 interface LocationData {
@@ -76,6 +77,7 @@ function mapsHref(name: string | null, lat: number | null, lng: number | null): 
 export function LocationSection({
   reunionId,
   isOrganizer = false,
+  embedded = false,
 }: LocationSectionProps) {
   const router = useRouter();
   const [data, setData] = useState<LocationData | null>(null);
@@ -236,29 +238,31 @@ export function LocationSection({
     : null;
 
   return (
-    <div className="card space-y-6">
-      <div className="between flex-col items-start sm:flex-row sm:items-start">
-        <div>
-          <span className="section-eyebrow">Step 3</span>
-          <div className="row">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
-              <MapPin className="h-4 w-4" />
-            </span>
-            <div>
-              <h3 className="text-xl">Choose a location</h3>
-              <p className="muted text-sm">
-                Save a known place now, or use the centered suggestion.
-              </p>
+    <div className={embedded ? "space-y-6" : "card space-y-6"}>
+      {!embedded && (
+        <div className="between flex-col items-start sm:flex-row sm:items-start">
+          <div>
+            <span className="section-eyebrow">Step 3</span>
+            <div className="row">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
+                <MapPin className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-xl">Choose a location</h3>
+                <p className="muted text-sm">
+                  Save a known place now, or use the centered suggestion.
+                </p>
+              </div>
             </div>
           </div>
+          {data && data.households.length > 0 && (
+            <span className="badge muted">
+              {data.households.length} household
+              {data.households.length === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
-        {data && data.households.length > 0 && (
-          <span className="badge muted">
-            {data.households.length} household
-            {data.households.length === 1 ? "" : "s"}
-          </span>
-        )}
-      </div>
+      )}
 
       {loading && (
         <div className="muted flex items-center justify-center py-8">

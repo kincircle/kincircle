@@ -9,12 +9,17 @@ vi.mock("@/lib/actions/date", () => ({
   sendVotingReminders: vi.fn(() => Promise.resolve({ sent: 5 })),
 }));
 
+vi.mock("@/lib/actions/finalize", () => ({
+  lockDate: vi.fn(() => Promise.resolve()),
+}));
+
 // Mock fetch - must be defined before imports
 const mockFetch = vi.fn();
 global.fetch = mockFetch as unknown as typeof fetch;
 
 import { DateOptionsSection } from "./DateOptionsSection";
 import { addDateOption, deleteDateOption, sendVotingReminders } from "@/lib/actions/date";
+import { lockDate } from "@/lib/actions/finalize";
 import { toast } from "sonner";
 
 describe("DateOptionsSection", () => {
@@ -194,6 +199,24 @@ describe("DateOptionsSection", () => {
     await waitFor(() => {
       expect(sendVotingReminders).toHaveBeenCalledWith("r-1");
       expect(toast.success).toHaveBeenCalledWith("Voting reminders sent to 5 households");
+    });
+  });
+
+  it("locks a date option when locking is enabled", async () => {
+    const user = userEvent.setup();
+    render(<DateOptionsSection reunionId="r-1" canLockDate />);
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: /lock it in/i })[0]
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getAllByRole("button", { name: /lock it in/i })[0]);
+
+    await waitFor(() => {
+      expect(lockDate).toHaveBeenCalledWith("r-1", "date-1");
+      expect(toast.success).toHaveBeenCalledWith("Date locked successfully");
     });
   });
 

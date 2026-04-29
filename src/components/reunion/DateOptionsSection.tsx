@@ -8,9 +8,12 @@ import {
   Send,
   Loader2,
   Plus,
+  Lock,
 } from "lucide-react";
 import { addDateOption, deleteDateOption, sendVotingReminders } from "@/lib/actions/date";
+import { lockDate } from "@/lib/actions/finalize";
 import { expectArray, expectArrayField } from "@/lib/response";
+import { useRouter } from "next/navigation";
 
 interface VoteTally {
   works: number;
@@ -37,6 +40,9 @@ interface DateOptionRow {
 
 interface DateOptionsSectionProps {
   reunionId: string;
+  embedded?: boolean;
+  lockedDateOptionId?: string | null;
+  canLockDate?: boolean;
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -66,13 +72,20 @@ function supportCount(votes: VoteTally): number {
   return votes.prefer + votes.works;
 }
 
-export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
+export function DateOptionsSection({
+  reunionId,
+  embedded = false,
+  lockedDateOptionId = null,
+  canLockDate = false,
+}: DateOptionsSectionProps) {
+  const router = useRouter();
   const [dateOptions, setDateOptions] = useState<DateOptionRow[]>([]);
   const [votesData, setVotesData] = useState<DateOptionWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [sendingReminders, setSendingReminders] = useState(false);
+  const [lockingId, setLockingId] = useState<string | null>(null);
 
   // Form state
   const [startDate, setStartDate] = useState("");
@@ -203,6 +216,20 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
     }
   };
 
+  const handleLockDate = async (dateOptionId: string) => {
+    setLockingId(dateOptionId);
+    try {
+      await lockDate(reunionId, dateOptionId);
+      toast.success("Date locked successfully");
+      router.refresh();
+      await fetchData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to lock date");
+    } finally {
+      setLockingId(null);
+    }
+  };
+
   // Find the winning option (highest prefer + works count)
   const winningId = votesData.length > 0
     ? votesData.reduce((best, opt) => {
@@ -225,7 +252,7 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
 
   if (loading) {
     return (
-      <div className="card">
+      <div className={embedded ? "" : "card"}>
         <div className="muted flex items-center justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span className="ml-2">Loading date options...</span>
@@ -235,23 +262,43 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
   }
 
   return (
-    <div className="card space-y-6">
-      <div className="between flex-col items-start sm:flex-row sm:items-start">
-        <div>
-          <span className="section-eyebrow">Step 2</span>
-          <div className="row">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
-              <Calendar className="h-4 w-4" />
-            </span>
-            <div>
-              <h3 className="text-xl">Pick a date</h3>
-              <p className="muted text-sm">
-                Add up to 4 date options and watch the household vote tally.
-              </p>
+    <div className={embedded ? "space-y-6" : "card space-y-6"}>
+      {!embedded && (
+        <div className="between flex-col items-start sm:flex-row sm:items-start">
+          <div>
+            <span className="section-eyebrow">Step 2</span>
+            <div className="row">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
+                <Calendar className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-xl">Pick a date</h3>
+                <p className="muted text-sm">
+                  Add up to 4 date options and watch the household vote tally.
+                </p>
+              </div>
             </div>
           </div>
+          {dateOptions.length > 0 && (
+            <button
+              type="button"
+              className="btn secondary sm disabled:pointer-events-none disabled:opacity-50"
+              onClick={handleSendReminders}
+              disabled={sendingReminders}
+            >
+              {sendingReminders ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Send Reminders
+            </button>
+          )}
         </div>
-        {dateOptions.length > 0 && (
+      )}
+
+      {embedded && dateOptions.length > 0 && (
+        <div className="flex justify-end">
           <button
             type="button"
             className="btn secondary sm disabled:pointer-events-none disabled:opacity-50"
@@ -265,8 +312,8 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
             )}
             Send Reminders
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {!atLimit && (
         <form
@@ -396,6 +443,9 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
                       {isWinning && (
                         <span className="badge">Leading</span>
                       )}
+                      {opt.id === lockedDateOptionId && (
+                        <span className="badge sage">Locked</span>
+                      )}
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -429,6 +479,22 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
                       </div>
                       <span className="vote-count">{optionSupportCount}</span>
                     </div>
+
+                    {canLockDate && !lockedDateOptionId && (
+                      <button
+                        type="button"
+                        className="btn primary sm disabled:pointer-events-none disabled:opacity-50"
+                        onClick={() => void handleLockDate(opt.id)}
+                        disabled={lockingId === opt.id}
+                      >
+                        {lockingId === opt.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Lock className="h-4 w-4" />
+                        )}
+                        Lock it in
+                      </button>
+                    )}
 
                     <button
                       type="button"

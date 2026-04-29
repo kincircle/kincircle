@@ -9,6 +9,7 @@ import type { Invite } from "@/types";
 
 interface InviteSectionProps {
   reunionId: string;
+  embedded?: boolean;
 }
 
 function inviteStatusClass(status: string): string {
@@ -24,7 +25,10 @@ function inviteStatusClass(status: string): string {
   }
 }
 
-export function InviteSection({ reunionId }: InviteSectionProps) {
+export function InviteSection({
+  reunionId,
+  embedded = false,
+}: InviteSectionProps) {
   const [emailInput, setEmailInput] = useState("");
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,24 +110,26 @@ export function InviteSection({ reunionId }: InviteSectionProps) {
       : "0 sent / 0 accepted / 0 pending";
 
   return (
-    <div className="card space-y-5">
-      <div className="between flex-col items-start sm:flex-row sm:items-start">
-        <div>
-          <span className="section-eyebrow">Step 1</span>
-          <div className="row">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
-              <Mail className="h-4 w-4" />
-            </span>
-            <div>
-              <h3 className="text-xl">Invite households</h3>
-              <p className="muted text-sm">
-                Bulk-paste family emails and track who has accepted.
-              </p>
+    <div className={embedded ? "space-y-5" : "card space-y-5"}>
+      {!embedded && (
+        <div className="between flex-col items-start sm:flex-row sm:items-start">
+          <div>
+            <span className="section-eyebrow">Step 1</span>
+            <div className="row">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
+                <Mail className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-xl">Invite households</h3>
+                <p className="muted text-sm">
+                  Bulk-paste family emails and track who has accepted.
+                </p>
+              </div>
             </div>
           </div>
+          <span className="badge muted">{inviteSummary}</span>
         </div>
-        <span className="badge muted">{inviteSummary}</span>
-      </div>
+      )}
 
       <form
         className="space-y-3"

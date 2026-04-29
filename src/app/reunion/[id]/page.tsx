@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { reunion, household } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { dateOption, dateVote, household, reunion } from "@/db/schema";
+import { and, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import Image from "next/image";
@@ -14,6 +14,7 @@ import { LocationSection } from "@/components/reunion/LocationSection";
 import { StatusSection } from "@/components/reunion/StatusSection";
 import { UpdatesSection } from "@/components/reunion/UpdatesSection";
 import { HeroPhotoUploader } from "@/components/reunion/HeroPhotoUploader";
+import { ReunionSteps, type StepConfig } from "@/components/reunion/ReunionSteps";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getCloudinaryApiKey, getCloudinaryCloudName } from "@/lib/env";
@@ -115,6 +116,10 @@ function getNextUpNudge(
   };
 }
 
+function getInitialExpandedStepId(steps: StepConfig[]) {
+  return steps.find((step) => step.state !== "done")?.id ?? steps.at(-1)?.id ?? "";
+}
+
 export default async function ReunionDetailPage({
   params,
 }: {
@@ -145,14 +150,38 @@ export default async function ReunionDetailPage({
     .select()
     .from(household)
     .where(eq(household.reunionId, id));
+  const dateOptionsForSummary = await db
+    .select({ id: dateOption.id })
+    .from(dateOption)
+    .where(eq(dateOption.reunionId, id));
+  const dateOptionIds = dateOptionsForSummary.map((option) => option.id);
+  const dateVotes =
+    dateOptionIds.length > 0
+      ? await db
+          .select({ id: dateVote.id })
+          .from(dateVote)
+          .where(inArray(dateVote.dateOptionId, dateOptionIds))
+      : [];
   const householdCount = households.length;
   const respondedCount = households.filter(
     (h) => h.rsvpStatus !== "pending"
   ).length;
+  const invitedCount = households.filter(
+    (h) => h.invitationStatus !== "not_sent"
+  ).length;
+  const acceptedCount = households.filter(
+    (h) => h.claimedAt || h.invitationStatus === "accepted"
+  ).length;
+  const dateOptionCount = dateOptionsForSummary.length;
+  const voteCount = dateVotes.length;
   const totalPartySize = households.reduce(
     (sum, h) => sum + (h.partySize ?? 1),
     0
   );
+  const hasHouseholds = householdCount > 0;
+  const hasLockedDate = found.lockedDateOptionId !== null;
+  const hasLockedLocation = found.lockedLocationName !== null;
+  const isFinalized = found.status === "finalized";
   const heroImageUrl = found.heroImageUrl || FALLBACK_HERO_IMAGE_URL;
   const responseSummary =
     householdCount > 0
@@ -168,6 +197,80 @@ export default async function ReunionDetailPage({
         apiKey: getCloudinaryApiKey(),
       }
     : null;
+  const organizerSteps: StepConfig[] = [
+    {
+      id: "reunion-invite",
+      number: 1,
+      title: "Invite households",
+      summary: hasHouseholds
+        ? `${pluralize(householdCount, "household")} added · ${invitedCount} invited · ${acceptedCount} claimed`
+        : "Add the first household to start planning.",
+      state: hasHouseholds ? "done" : "active",
+      body: <InviteSection reunionId={id} embedded />,
+    },
+    {
+      id: "reunion-dates",
+      number: 2,
+      title: "Pick a date",
+      summary: hasLockedDate
+        ? `Date locked · ${pluralize(dateOptionCount, "option")} · ${pluralize(voteCount, "vote")}`
+        : hasHouseholds
+          ? `${pluralize(dateOptionCount, "option")} · ${pluralize(voteCount, "vote")}`
+          : "Invite households first.",
+      state: !hasHouseholds ? "pending" : hasLockedDate ? "done" : "active",
+      body: (
+        <DateOptionsSection
+          reunionId={id}
+          embedded
+          lockedDateOptionId={found.lockedDateOptionId}
+          canLockDate={found.status === "planning"}
+        />
+      ),
+    },
+    {
+      id: "reunion-location",
+      number: 3,
+      title: "Choose a location",
+      summary: hasLockedLocation
+        ? found.lockedLocationName!
+        : hasLockedDate
+          ? "Save a known place or use the centered suggestion."
+          : "Lock a date first.",
+      state:
+        !hasHouseholds || !hasLockedDate
+          ? "pending"
+          : hasLockedLocation
+            ? "done"
+            : "active",
+      body: <LocationSection reunionId={id} isOrganizer embedded />,
+    },
+    {
+      id: "reunion-status",
+      number: 4,
+      title: "Send the final plan",
+      summary: isFinalized
+        ? "Final plan sent."
+        : hasLockedLocation
+          ? "Finalize and email the family."
+          : "Choose a location first.",
+      state:
+        !hasHouseholds || !hasLockedDate || !hasLockedLocation
+          ? "pending"
+          : isFinalized
+            ? "done"
+            : "active",
+      body: (
+        <StatusSection
+          reunionId={id}
+          currentStatus={found.status}
+          lockedLocationName={found.lockedLocationName}
+          lockedLocationLat={found.lockedLocationLat}
+          lockedLocationLng={found.lockedLocationLng}
+        />
+      ),
+    },
+  ];
+  const initialExpandedStepId = getInitialExpandedStepId(organizerSteps);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -236,20 +339,10 @@ export default async function ReunionDetailPage({
           <div className="my-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-6">
               {isOrganizer ? (
-                <>
-                  <section id="reunion-status">
-                    <StatusSection reunionId={id} currentStatus={found.status} />
-                  </section>
-                  <section id="reunion-invite">
-                    <InviteSection reunionId={id} />
-                  </section>
-                  <section id="reunion-dates">
-                    <DateOptionsSection reunionId={id} />
-                  </section>
-                  <section id="reunion-location">
-                    <LocationSection reunionId={id} isOrganizer={isOrganizer} />
-                  </section>
-                </>
+                <ReunionSteps
+                  steps={organizerSteps}
+                  initialExpandedId={initialExpandedStepId}
+                />
               ) : (
                 <>
                   <section id="reunion-dates">
