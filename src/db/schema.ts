@@ -12,7 +12,7 @@ import {
   doublePrecision,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // Auth tables - defined here for migrations, managed by Better Auth at runtime
 export const user = pgTable("user", {
@@ -134,6 +134,23 @@ export const householdMember = pgTable("household_member", {
   index("household_member_household_id_idx").on(table.householdId),
   check("household_member_age_group_check", sql`${table.ageGroup} in ('adult', 'child')`),
   check("household_member_age_check", sql`${table.age} is null or ${table.age} >= 0`),
+]);
+
+export const potluckItem = pgTable("potluck_item", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reunionId: uuid("reunion_id").notNull().references(() => reunion.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  notes: text("notes"),
+  claimedByHouseholdId: uuid("claimed_by_household_id").references(() => household.id, { onDelete: "set null" }),
+  claimedAt: timestamp("claimed_at"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdByUserId: text("created_by_user_id").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("potluck_item_reunion_id_idx").on(table.reunionId),
+  index("potluck_item_claimed_by_household_id_idx").on(table.claimedByHouseholdId),
+  uniqueIndex("potluck_item_reunion_name_idx").on(table.reunionId, table.name),
 ]);
 
 export const invite = pgTable("invite", {
