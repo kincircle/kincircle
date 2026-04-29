@@ -27,6 +27,9 @@ interface LocationData {
   centerLat: number | null;
   centerLng: number | null;
   centerName: string | null;
+  lockedLocationName: string | null;
+  lockedLocationLat: number | null;
+  lockedLocationLng: number | null;
   households: {
     householdId: string;
     primaryContactName: string;
@@ -134,6 +137,7 @@ export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) 
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDateOptionId, setSelectedDateOptionId] = useState<string>("");
+  const [manualLocationName, setManualLocationName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -166,17 +170,27 @@ export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) 
           const centerLng =
             typeof json.centerLng === "number" ? json.centerLng : null;
 
-          if (centerLat === null || centerLng === null) {
-            setLocationData(null);
-          } else {
-            setLocationData({
-              centerLat,
-              centerLng,
-              centerName:
-                typeof json.centerName === "string" ? json.centerName : null,
-              households,
-            });
-          }
+          const lockedLocationName =
+            typeof json.lockedLocationName === "string"
+              ? json.lockedLocationName
+              : null;
+          setLocationData({
+            centerLat,
+            centerLng,
+            centerName:
+              typeof json.centerName === "string" ? json.centerName : null,
+            lockedLocationName,
+            lockedLocationLat:
+              typeof json.lockedLocationLat === "number"
+                ? json.lockedLocationLat
+                : null,
+            lockedLocationLng:
+              typeof json.lockedLocationLng === "number"
+                ? json.lockedLocationLng
+                : null,
+            households,
+          });
+          setManualLocationName(lockedLocationName ?? "");
         }
       }
     } catch (error) {
@@ -205,21 +219,24 @@ export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) 
     }
   }
 
-  async function handleFinalize() {
-    if (
-      !locationData ||
-      locationData.centerLat === null ||
-      locationData.centerLng === null
-    ) {
+  async function finalizeWithLocation(
+    locationName: string,
+    locationLat: number | null,
+    locationLng: number | null
+  ) {
+    const normalizedLocationName = locationName.trim();
+    if (!normalizedLocationName) {
+      toast.error("Enter a location first");
       return;
     }
+
     try {
       setSubmitting(true);
       await finalizeReunion(
         reunionId,
-        locationData.centerName ?? `${locationData.centerLat.toFixed(4)}, ${locationData.centerLng.toFixed(4)}`,
-        locationData.centerLat,
-        locationData.centerLng
+        normalizedLocationName,
+        locationLat,
+        locationLng
       );
       toast.success("Reunion finalized!");
       router.refresh();
@@ -229,6 +246,36 @@ export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) 
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleFinalizeSavedLocation() {
+    if (!locationData?.lockedLocationName) return;
+    await finalizeWithLocation(
+      locationData.lockedLocationName,
+      locationData.lockedLocationLat,
+      locationData.lockedLocationLng
+    );
+  }
+
+  async function handleFinalizeSuggestedLocation() {
+    if (
+      !locationData ||
+      locationData.centerLat === null ||
+      locationData.centerLng === null
+    ) {
+      return;
+    }
+    await finalizeWithLocation(
+      locationData.centerName ??
+        `${locationData.centerLat.toFixed(4)}, ${locationData.centerLng.toFixed(4)}`,
+      locationData.centerLat,
+      locationData.centerLng
+    );
+  }
+
+  async function handleFinalizeManualLocation(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await finalizeWithLocation(manualLocationName, null, null);
   }
 
   // Derive step states
@@ -317,40 +364,97 @@ export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) 
   );
 
   // Body for the "finalize reunion" active step
+  const hasSavedLocation = Boolean(locationData?.lockedLocationName);
+  const hasSuggestedLocation =
+    locationData?.centerLat !== null &&
+    locationData?.centerLat !== undefined &&
+    locationData?.centerLng !== null &&
+    locationData?.centerLng !== undefined;
+  const suggestedLocationName =
+    hasSuggestedLocation && locationData
+      ? locationData.centerName ??
+        `${locationData.centerLat!.toFixed(4)}, ${locationData.centerLng!.toFixed(4)}`
+      : null;
+
   const finalizeBody = loading ? (
     <div className="flex items-center justify-center py-8">
       <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--ink-soft)" }} />
     </div>
-  ) : !locationData ||
-    locationData.centerLat === null ||
-    locationData.centerLng === null ? (
-    <p className="text-sm" style={{ color: "var(--ink-soft)", paddingTop: "0.25rem" }}>
-      No location data available yet. Locations will appear as guests RSVP with their city.
-    </p>
   ) : (
     <div className="space-y-4">
-      <div
-        className="rounded-[var(--radius-md)] p-4"
-        style={{ background: "var(--muted)" }}
-      >
-        <p className="mb-1 text-sm font-medium">Suggested Location</p>
-        <p className="text-lg font-semibold">
-          {locationData.centerName ??
-            `${locationData.centerLat.toFixed(4)}, ${locationData.centerLng.toFixed(4)}`}
-        </p>
-      </div>
-      <button
-        className="btn sm"
-        onClick={handleFinalize}
-        disabled={submitting}
-      >
-        {submitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <CheckCircle2 className="h-4 w-4" />
-        )}
-        Finalize Reunion
-      </button>
+      {hasSavedLocation && locationData && (
+        <div
+          className="rounded-[var(--radius-md)] p-4"
+          style={{ background: "var(--sage-soft)" }}
+        >
+          <p className="mb-1 text-sm font-medium">Saved location</p>
+          <p className="text-lg font-semibold">
+            {locationData.lockedLocationName}
+          </p>
+          <button
+            className="btn sm mt-3"
+            onClick={handleFinalizeSavedLocation}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            Finalize with saved location
+          </button>
+        </div>
+      )}
+
+      <form className="space-y-3" onSubmit={handleFinalizeManualLocation}>
+        <div>
+          <label className="label" htmlFor="finalize-known-location">
+            Known location
+          </label>
+          <input
+            id="finalize-known-location"
+            className="input"
+            value={manualLocationName}
+            onChange={(event) => setManualLocationName(event.target.value)}
+            placeholder="Lake Anna State Park - Pavilion B"
+            maxLength={240}
+          />
+        </div>
+        <button
+          type="submit"
+          className="btn ghost sm"
+          disabled={submitting || !manualLocationName.trim()}
+        >
+          {submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <MapPin className="h-4 w-4" />
+          )}
+          Finalize with known location
+        </button>
+      </form>
+
+      {hasSuggestedLocation && suggestedLocationName && (
+        <div
+          className="rounded-[var(--radius-md)] p-4"
+          style={{ background: "var(--muted)" }}
+        >
+          <p className="mb-1 text-sm font-medium">Suggested location</p>
+          <p className="text-lg font-semibold">{suggestedLocationName}</p>
+          <button
+            className="btn ghost sm mt-3"
+            onClick={handleFinalizeSuggestedLocation}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            Use suggestion
+          </button>
+        </div>
+      )}
     </div>
   );
 
