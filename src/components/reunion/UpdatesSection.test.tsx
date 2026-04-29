@@ -43,6 +43,7 @@ describe("UpdatesSection", () => {
                 title: "Welcome",
                 message: "See you soon.",
                 createdBy: "organizer-1",
+                authorName: "Blair Zimmerman",
                 createdAt: "2026-03-13T10:00:00Z",
               },
             ]),
@@ -65,11 +66,35 @@ describe("UpdatesSection", () => {
   });
 
   it("renders existing updates", async () => {
-    render(<UpdatesSection reunionId="reunion-1" isOrganizer={false} />);
+    render(
+      <UpdatesSection
+        reunionId="reunion-1"
+        isOrganizer={false}
+        currentUserId="member-1"
+      />
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome")).toBeInTheDocument();
       expect(screen.getByText("See you soon.")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Blair Zimmerman")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Post update/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("labels the current user's own update as You", async () => {
+    render(
+      <UpdatesSection
+        reunionId="reunion-1"
+        isOrganizer
+        currentUserId="organizer-1"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("You")).toBeInTheDocument();
     });
   });
 
@@ -78,20 +103,21 @@ describe("UpdatesSection", () => {
     render(<UpdatesSection reunionId="reunion-1" isOrganizer />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/Title/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: /Announcement/i })
+      ).toBeInTheDocument();
     });
 
-    await user.type(screen.getByLabelText(/Title/i), "Parking update");
     await user.type(
-      screen.getByLabelText(/Message/i),
+      screen.getByRole("textbox", { name: /Announcement/i }),
       "Use the south lot."
     );
-    await user.click(screen.getByRole("button", { name: /Post Update/i }));
+    await user.click(screen.getByRole("button", { name: /Post update/i }));
 
     await waitFor(() => {
       expect(postUpdate).toHaveBeenCalledWith(
         "reunion-1",
-        "Parking update",
+        "Use the south lot.",
         "Use the south lot."
       );
       expect(
@@ -105,15 +131,16 @@ describe("UpdatesSection", () => {
     render(<UpdatesSection reunionId="reunion-1" isOrganizer />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/Title/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: /Announcement/i })
+      ).toBeInTheDocument();
     });
 
-    await user.type(screen.getByLabelText(/Title/i), "Parking update");
     await user.type(
-      screen.getByLabelText(/Message/i),
+      screen.getByRole("textbox", { name: /Announcement/i }),
       "Use the south lot."
     );
-    await user.click(screen.getByRole("button", { name: /Post Update/i }));
+    await user.click(screen.getByRole("button", { name: /Post update/i }));
 
     await waitFor(() => {
       expect(
@@ -137,15 +164,16 @@ describe("UpdatesSection", () => {
     render(<UpdatesSection reunionId="reunion-1" isOrganizer />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/Title/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: /Announcement/i })
+      ).toBeInTheDocument();
     });
 
-    await user.type(screen.getByLabelText(/Title/i), "Parking update");
     await user.type(
-      screen.getByLabelText(/Message/i),
+      screen.getByRole("textbox", { name: /Announcement/i }),
       "Use the south lot."
     );
-    await user.click(screen.getByRole("button", { name: /Post Update/i }));
+    await user.click(screen.getByRole("button", { name: /Post update/i }));
 
     await waitFor(() => {
       expect(

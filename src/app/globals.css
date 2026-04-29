@@ -517,6 +517,32 @@
   }
 }
 
+/* === UPDATES === */
+.updates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.update {
+  display: flex;
+  gap: 0.75rem;
+}
+.update .body {
+  flex: 1;
+  background: var(--bg-warm);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+}
+.update .body small {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--ink-soft);
+}
+.update .body small strong {
+  color: var(--ink);
+}
+
 /* === VOICE === */
 h1 em,
 h2 em,

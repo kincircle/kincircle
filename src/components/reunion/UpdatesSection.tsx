@@ -1,18 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, MessageSquare, Send } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { postUpdate, sendUpdateNotification } from "@/lib/actions/finalize";
 import { expectArray, isRecord } from "@/lib/response";
@@ -21,7 +10,13 @@ import type { ReunionUpdate } from "@/types";
 interface UpdatesSectionProps {
   reunionId: string;
   isOrganizer: boolean;
+  currentUserId?: string;
 }
+
+type UpdateWithAuthor = Omit<ReunionUpdate, "createdAt"> & {
+  createdAt: string | Date;
+  authorName?: string | null;
+};
 
 interface PendingNotification {
   updateId: string;
@@ -29,13 +24,56 @@ interface PendingNotification {
   sending: boolean;
 }
 
-export function UpdatesSection({ reunionId, isOrganizer }: UpdatesSectionProps) {
-  const [updates, setUpdates] = useState<ReunionUpdate[]>([]);
+function initials(name: string | null | undefined): string {
+  if (!name) return "KC";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "KC";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
+function formatRelative(dateStr: string | Date): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) return "today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  const weeks = Math.floor(diffDays / 7);
+  if (weeks === 1) return "1 week ago";
+  if (weeks < 5) return `${weeks} weeks ago`;
+
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function deriveUpdateTitle(message: string): string {
+  const firstLine = message.trim().split(/\r?\n/)[0]?.trim() ?? "";
+  if (!firstLine) return "Announcement";
+  return firstLine.length > 80 ? `${firstLine.slice(0, 77)}...` : firstLine;
+}
+
+function authorLabel(update: UpdateWithAuthor, currentUserId?: string): string {
+  if (currentUserId && update.createdBy === currentUserId) {
+    return "You";
+  }
+
+  return update.authorName?.trim() || "Organizer";
+}
+
+export function UpdatesSection({
+  reunionId,
+  isOrganizer,
+  currentUserId,
+}: UpdatesSectionProps) {
+  const [updates, setUpdates] = useState<UpdateWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [pendingNotification, setPendingNotification] =
     useState<PendingNotification | null>(null);
-  const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
 
   const fetchUpdates = useCallback(async () => {
@@ -43,7 +81,7 @@ export function UpdatesSection({ reunionId, isOrganizer }: UpdatesSectionProps) 
       setLoading(true);
       const res = await fetch(`/api/reunions/${reunionId}/updates`);
       if (!res.ok) throw new Error("Failed to fetch updates");
-      const json = expectArray<ReunionUpdate>(
+      const json = expectArray<UpdateWithAuthor>(
         await res.json(),
         "reunion updates"
       );
@@ -81,15 +119,19 @@ export function UpdatesSection({ reunionId, isOrganizer }: UpdatesSectionProps) 
 
   async function handlePost(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !message.trim()) return;
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage) return;
 
     let createdUpdate: ReunionUpdate | null = null;
 
     try {
       setPosting(true);
-      createdUpdate = await postUpdate(reunionId, title.trim(), message.trim());
+      createdUpdate = await postUpdate(
+        reunionId,
+        deriveUpdateTitle(trimmedMessage),
+        trimmedMessage
+      );
       toast.success("Update posted");
-      setTitle("");
       setMessage("");
       setPendingNotification(null);
     } catch (error) {
@@ -145,135 +187,113 @@ export function UpdatesSection({ reunionId, isOrganizer }: UpdatesSectionProps) 
     }
   }
 
-  function formatTimestamp(dateStr: string | Date): string {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-muted-foreground" />
-          <CardTitle>Updates</CardTitle>
+    <div className="card">
+      <h3 className="text-xl">Announcements</h3>
+      <p className="muted mt-1 text-sm">Everyone in the reunion sees these.</p>
+
+      {loading && (
+        <div className="muted flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
-        <CardDescription>
-          Announcements and news about this reunion
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isOrganizer && (
-          <form onSubmit={handlePost} className="space-y-3 mb-6">
-            <div>
-              <Label htmlFor="update-title">Title</Label>
-              <Input
-                id="update-title"
-                placeholder="Update title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={posting}
-              />
-            </div>
-            <div>
-              <Label htmlFor="update-message">Message</Label>
-              <Textarea
-                id="update-message"
-                placeholder="Share news with your family..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={3}
-                disabled={posting}
-              />
-            </div>
-            <Button type="submit" disabled={posting || !title.trim() || !message.trim()}>
+      )}
+
+      {!loading && updates.length === 0 && (
+        <p className="muted py-4 text-sm">No updates yet.</p>
+      )}
+
+      {!loading && updates.length > 0 && (
+        <div className="updates-list">
+          {updates.map((update) => {
+            const name = authorLabel(update, currentUserId);
+
+            return (
+              <div className="update" key={update.id}>
+                <span className="avatar">
+                  {initials(update.authorName ?? name)}
+                </span>
+                <div className="body">
+                  <small>
+                    <strong>{name}</strong> &middot;{" "}
+                    {formatRelative(update.createdAt)}
+                  </small>
+                  <p className="whitespace-pre-wrap">{update.message}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {isOrganizer && (
+        <form onSubmit={handlePost} className="mt-4 space-y-3">
+          <textarea
+            className="textarea"
+            placeholder="Share something with the group..."
+            aria-label="Announcement"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={2}
+            disabled={posting}
+          />
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="btn sm disabled:pointer-events-none disabled:opacity-50"
+              disabled={posting || !message.trim()}
+            >
               {posting ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="h-4 w-4" />
               )}
-              Post Update
-            </Button>
-
-            {pendingNotification && (
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                <div>
-                  <p className="font-medium">
-                    Send email notification to {pendingNotification.total} household
-                    {pendingNotification.total === 1 ? "" : "s"}?
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    This update is already posted. Choose whether to notify households with email on file.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={pendingNotification.sending}
-                    onClick={() => setPendingNotification(null)}
-                  >
-                    Skip
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={pendingNotification.sending}
-                    onClick={handleSendNotification}
-                  >
-                    {pendingNotification.sending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Email
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </form>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              Post update
+            </button>
           </div>
-        )}
 
-        {!loading && updates.length === 0 && (
-          <p className="text-sm text-muted-foreground py-4">
-            No updates yet.
-          </p>
-        )}
-
-        {!loading && updates.length > 0 && (
-          <div className="space-y-4">
-            {updates.map((update) => (
-              <div
-                key={update.id}
-                className="border-l-2 border-primary/20 pl-4 py-2"
-              >
-                <p className="font-medium text-sm">{update.title}</p>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                  {update.message}
+          {pendingNotification && (
+            <div className="space-y-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-warm)] p-4">
+              <div>
+                <p className="font-medium">
+                  Send email notification to {pendingNotification.total} household
+                  {pendingNotification.total === 1 ? "" : "s"}?
                 </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {formatTimestamp(update.createdAt)}
+                <p className="muted text-sm">
+                  This update is already posted. Choose whether to notify households with email on file.
                 </p>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  disabled={pendingNotification.sending}
+                  onClick={() => setPendingNotification(null)}
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  className="btn sm disabled:pointer-events-none disabled:opacity-50"
+                  disabled={pendingNotification.sending}
+                  onClick={handleSendNotification}
+                >
+                  {pendingNotification.sending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Email
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </form>
+      )}
+    </div>
   );
 }

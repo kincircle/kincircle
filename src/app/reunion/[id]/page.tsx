@@ -332,7 +332,11 @@ export default async function ReunionDetailPage({
           <div className="space-y-6">
             {isOrganizer && <HouseholdList reunionId={id} organizerId={found.organizerId} />}
             <section id="reunion-updates">
-              <UpdatesSection reunionId={id} isOrganizer={isOrganizer} />
+              <UpdatesSection
+                reunionId={id}
+                isOrganizer={isOrganizer}
+                currentUserId={session.user.id}
+              />
             </section>
           </div>
         </div>
