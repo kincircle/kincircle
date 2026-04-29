@@ -1,23 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2, CheckCircle2 } from "lucide-react";
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  HelpCircle,
+  Loader2,
+  Plus,
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type RsvpStatus = "yes" | "maybe" | "no";
+type VoteChoice = "works" | "prefer" | "cannot";
 
 interface MemberRow {
   id: string;
@@ -27,9 +25,62 @@ interface MemberRow {
 }
 
 interface InviteData {
-  reunion: { name: string; description: string | null };
-  invite: { email: string };
+  reunion: {
+    name: string;
+    description: string | null;
+    heroImageUrl: string | null;
+  };
+  invite: { email: string; householdName: string | null; invitedBy?: string | null };
   reunionId: string;
+  dateOptions: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    description: string | null;
+  }[];
+}
+
+const FALLBACK_INVITE_IMAGE =
+  "/images/Kids_grandparents_family_reunion_4a2cad3fce.jpeg";
+
+function formatDateRange(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+  const year = start.getFullYear();
+
+  if (startDate === endDate) {
+    return start.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  if (startMonth !== endMonth) {
+    return `${startMonth} ${start.getDate()} – ${endMonth} ${end.getDate()}, ${year}`;
+  }
+
+  return `${startMonth} ${start.getDate()} – ${end.getDate()}, ${year}`;
+}
+
+function formatDateSubtext(startDate: string, endDate: string, description: string | null) {
+  if (description) return description;
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const startWeekday = start.toLocaleDateString("en-US", { weekday: "long" });
+  const endWeekday = end.toLocaleDateString("en-US", { weekday: "long" });
+  return startDate === endDate ? startWeekday : `${startWeekday} – ${endWeekday}`;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 export default function InviteRsvpPage() {
@@ -45,7 +96,6 @@ export default function InviteRsvpPage() {
   // Form state
   const [name, setName] = useState("");
   const [rsvp, setRsvp] = useState<RsvpStatus | null>(null);
-  const [partySize, setPartySize] = useState(1);
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zip, setZip] = useState("");
@@ -53,6 +103,7 @@ export default function InviteRsvpPage() {
   const [arrivalNotes, setArrivalNotes] = useState("");
   const [departureNotes, setDepartureNotes] = useState("");
   const [members, setMembers] = useState<MemberRow[]>([]);
+  const [dateVotes, setDateVotes] = useState<Record<string, VoteChoice>>({});
 
   useEffect(() => {
     async function fetchInvite() {
@@ -110,7 +161,7 @@ export default function InviteRsvpPage() {
       const body = {
         name,
         rsvpStatus: rsvp,
-        partySize,
+        partySize: Math.max(1, members.filter((m) => m.name.trim()).length),
         city: city || undefined,
         state: state || undefined,
         zipCode: zip || undefined,
@@ -124,6 +175,10 @@ export default function InviteRsvpPage() {
             ageGroup: m.ageGroup,
             age: m.age ? parseInt(m.age, 10) : undefined,
           })),
+        dateVotes: Object.entries(dateVotes).map(([dateOptionId, vote]) => ({
+          dateOptionId,
+          vote,
+        })),
       };
 
       const res = await fetch(`/api/invite/${token}`, {
@@ -147,8 +202,8 @@ export default function InviteRsvpPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="kc-invite-status">
+        <div>
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>Loading invitation...</span>
         </div>
@@ -158,273 +213,306 @@ export default function InviteRsvpPage() {
 
   if (error && !inviteData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl">Invitation Unavailable</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="kc-invite-status">
+        <div className="kc-invite-message-card">
+          <AlertCircle className="mx-auto h-7 w-7 text-[var(--destructive)]" />
+          <h1>Invitation unavailable</h1>
+          <p>{error}</p>
+        </div>
       </div>
     );
   }
 
   if (submitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <CardTitle className="text-xl">RSVP Submitted!</CardTitle>
-            <CardDescription>
-              Thank you for responding to the {inviteData?.reunion.name}{" "}
-              reunion. The organizer will be in touch with more details.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="kc-invite-status">
+        <div className="kc-invite-message-card">
+          <CheckCircle2 className="mx-auto h-9 w-9 text-[var(--sage)]" />
+          <h1>RSVP submitted</h1>
+          <p>
+            Thank you for responding to the {inviteData?.reunion.name} reunion.
+            The organizer will be in touch with more details.
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!inviteData) return null;
 
-  const rsvpOptions: { value: RsvpStatus; label: string }[] = [
-    { value: "yes", label: "Yes, we'll be there!" },
-    { value: "maybe", label: "Maybe" },
-    { value: "no", label: "Can't make it" },
+  const rsvpOptions: {
+    value: RsvpStatus;
+    title: string;
+    subtitle: string;
+    icon: ReactNode;
+  }[] = [
+    {
+      value: "yes",
+      title: "Yes, we're in",
+      subtitle: "Excited to celebrate",
+      icon: <Check className="h-[18px] w-[18px]" />,
+    },
+    {
+      value: "maybe",
+      title: "Maybe",
+      subtitle: "Holding the date",
+      icon: <HelpCircle className="h-[18px] w-[18px]" />,
+    },
+    {
+      value: "no",
+      title: "Can't make it",
+      subtitle: "We'll be there in spirit",
+      icon: <X className="h-[18px] w-[18px]" />,
+    },
   ];
 
+  const heroImage = inviteData.reunion.heroImageUrl || FALLBACK_INVITE_IMAGE;
+  const invitedAs = inviteData.invite.householdName || inviteData.invite.email;
+  const hostName = inviteData.invite.invitedBy || "KinCircle";
+  const hostInitials = getInitials(hostName);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4 py-12">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            {inviteData.reunion.name}
-          </CardTitle>
-          {inviteData.reunion.description && (
-            <CardDescription className="mt-1">
-              {inviteData.reunion.description}
-            </CardDescription>
-          )}
-          <p className="mt-2 text-sm text-muted-foreground">
-            You&apos;re invited! Please RSVP below.
-          </p>
-        </CardHeader>
+    <div className="kc-invite-page">
+      <div className="kc-invite-shell">
+        {/* ── Hero ── */}
+        <section className="kc-invite-hero">
+          <Image
+            src={heroImage}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 720px) 720px, 100vw"
+            unoptimized={heroImage.startsWith("http")}
+            className="object-cover"
+          />
+          <div className="kc-invite-hero-content">
+            <div className="kc-invite-host">
+              <span className="avatar">{hostInitials}</span>
+              <span style={{ color: "oklch(0.95 0.01 85)", fontSize: "0.95rem" }}>
+                {hostName} invited you to
+              </span>
+            </div>
+            <h1>{inviteData.reunion.name}</h1>
+          </div>
+        </section>
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
-              </div>
+        {/* ── Card ── */}
+        <form className="kc-invite-card" onSubmit={handleSubmit}>
+
+          {/* Household header */}
+          <div className="kc-invite-you">
+            <small>You&apos;re invited as</small>
+            <h2 style={{ marginTop: "0.25rem", fontStyle: "italic" }}>{invitedAs}</h2>
+            {inviteData.reunion.description && (
+              <p>{inviteData.reunion.description}</p>
             )}
+          </div>
 
-            {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Your Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Full name"
-                required
-              />
-            </div>
+          {error && <div className="kc-form-error">{error}</div>}
 
-            {/* RSVP Status */}
-            <div className="space-y-2">
-              <Label>Will you attend? *</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {rsvpOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setRsvp(opt.value)}
-                    className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                      rsvp === opt.value
-                        ? opt.value === "yes"
-                          ? "border-green-500 bg-green-50 text-green-700 dark:border-green-400 dark:bg-green-900/30 dark:text-green-300"
-                          : opt.value === "maybe"
-                            ? "border-yellow-500 bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:bg-yellow-900/30 dark:text-yellow-300"
-                            : "border-red-500 bg-red-50 text-red-700 dark:border-red-400 dark:bg-red-900/30 dark:text-red-300"
-                        : "border-border bg-background text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Contact name */}
+          <h3 className="kc-invite-section-title">Who should we contact?</h3>
+          <label className="kc-field">
+            <span>Your name</span>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Full name"
+              required
+            />
+          </label>
 
-            {/* Party Size */}
-            <div className="space-y-2">
-              <Label htmlFor="partySize">Party Size *</Label>
-              <Input
-                id="partySize"
-                type="number"
-                min={1}
-                max={50}
-                value={partySize}
-                onChange={(e) =>
-                  setPartySize(Math.max(1, parseInt(e.target.value, 10) || 1))
-                }
-                required
-              />
-            </div>
+          {/* RSVP */}
+          <h3 className="kc-invite-section-title">Can you make it?</h3>
+          <div className="kc-rsvp-row">
+            {rsvpOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={cn("kc-rsvp", rsvp === option.value && "selected")}
+                onClick={() => setRsvp(option.value)}
+                aria-pressed={rsvp === option.value}
+              >
+                <span className="kc-rsvp-icon">{option.icon}</span>
+                <h4>{option.title}</h4>
+                <small>{option.subtitle}</small>
+              </button>
+            ))}
+          </div>
 
-            <Separator />
+          {/* Members */}
+          <h3 className="kc-invite-section-title">Who&apos;s coming with you?</h3>
+          <p className="kc-invite-help">Add each person so we can plan food and seating.</p>
 
-            {/* Location */}
-            <div className="space-y-2">
-              <Label>Location (helps with planning)</Label>
-              <div className="grid grid-cols-3 gap-2">
-                <Input
-                  placeholder="City"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+          <div className="kc-members" style={{ marginTop: "0.85rem" }}>
+            {members.map((member) => (
+              <div
+                key={member.id}
+                className="kc-member-row"
+                style={{ gridTemplateColumns: "minmax(0, 1fr) 140px auto" }}
+              >
+                <input
+                  value={member.name}
+                  onChange={(event) =>
+                    updateMember(member.id, "name", event.target.value)
+                  }
+                  placeholder="Member name"
                 />
-                <Input
-                  placeholder="State"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                />
-                <Input
-                  placeholder="Zip"
-                  value={zip}
-                  onChange={(e) => setZip(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Dietary Needs */}
-            <div className="space-y-2">
-              <Label htmlFor="dietary">Dietary Needs</Label>
-              <Textarea
-                id="dietary"
-                placeholder="Any allergies or dietary restrictions?"
-                value={dietaryNeeds}
-                onChange={(e) => setDietaryNeeds(e.target.value)}
-                rows={2}
-              />
-            </div>
-
-            {/* Arrival/Departure */}
-            <div className="space-y-2">
-              <Label htmlFor="arrival">Arrival Notes</Label>
-              <Textarea
-                id="arrival"
-                placeholder="When do you plan to arrive?"
-                value={arrivalNotes}
-                onChange={(e) => setArrivalNotes(e.target.value)}
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="departure">Departure Notes</Label>
-              <Textarea
-                id="departure"
-                placeholder="When do you plan to leave?"
-                value={departureNotes}
-                onChange={(e) => setDepartureNotes(e.target.value)}
-                rows={2}
-              />
-            </div>
-
-            <Separator />
-
-            {/* Household Members */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Household Members</Label>
-                <Button
+                <select
+                  value={member.ageGroup}
+                  onChange={(event) =>
+                    updateMember(member.id, "ageGroup", event.target.value)
+                  }
+                >
+                  <option value="adult">Adult</option>
+                  <option value="child">Child</option>
+                </select>
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addMember}
+                  aria-label={`Remove ${member.name || "member"}`}
+                  onClick={() => removeMember(member.id)}
                 >
-                  <Plus className="mr-1 h-3.5 w-3.5" />
-                  Add Member
-                </Button>
+                  <X className="h-4 w-4" />
+                </button>
               </div>
+            ))}
+          </div>
 
-              {members.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Add family members or guests who will attend with you.
-                </p>
-              )}
+          <button
+            type="button"
+            className="btn ghost sm"
+            style={{ marginTop: "0.75rem" }}
+            onClick={addMember}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add another person
+          </button>
 
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-start gap-2 rounded-md border p-3"
-                >
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      placeholder="Member name"
-                      value={member.name}
-                      onChange={(e) =>
-                        updateMember(member.id, "name", e.target.value)
-                      }
-                    />
-                    <div className="flex gap-2">
-                      <select
-                        value={member.ageGroup}
-                        onChange={(e) =>
-                          updateMember(member.id, "ageGroup", e.target.value)
-                        }
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="adult">Adult</option>
-                        <option value="child">Child</option>
-                      </select>
-                      <Input
-                        type="number"
-                        placeholder="Age"
-                        min={0}
-                        max={120}
-                        value={member.age}
-                        onChange={(e) =>
-                          updateMember(member.id, "age", e.target.value)
-                        }
-                        className="w-20"
-                      />
+          {/* Address */}
+          <h3 className="kc-invite-section-title" style={{ fontStyle: "italic" }}>
+            Where are you traveling from?
+          </h3>
+          <p className="kc-invite-help">
+            We use this to suggest a location everyone can reach. Only your city
+            is shown to other households.
+          </p>
+          <div className="kc-location-grid" style={{ marginTop: "0.85rem" }}>
+            <input
+              value={city}
+              onChange={(event) => setCity(event.target.value)}
+              placeholder="City"
+            />
+            <input
+              value={state}
+              onChange={(event) => setState(event.target.value)}
+              placeholder="State"
+            />
+            <input
+              value={zip}
+              onChange={(event) => setZip(event.target.value)}
+              placeholder="Zip"
+            />
+          </div>
+
+          {/* Date voting */}
+          {inviteData.dateOptions.length > 0 && (
+            <>
+              <h3 className="kc-invite-section-title">Which dates work for you?</h3>
+              <div className="kc-date-vote-list">
+                {inviteData.dateOptions.map((option) => (
+                  <div key={option.id} className="kc-date-vote">
+                    <div className="kc-date-when">
+                      <div>{formatDateRange(option.startDate, option.endDate)}</div>
+                      <small>
+                        {formatDateSubtext(
+                          option.startDate,
+                          option.endDate,
+                          option.description
+                        )}
+                      </small>
+                    </div>
+                    <div className="kc-vote-buttons">
+                      {(
+                        [
+                          ["works", "Works"],
+                          ["prefer", "Prefer"],
+                          ["cannot", "Can't"],
+                        ] as const
+                      ).map(([choice, label]) => (
+                        <button
+                          key={choice}
+                          type="button"
+                          className={cn(
+                            "kc-vote-btn",
+                            dateVotes[option.id] === choice && "selected",
+                            dateVotes[option.id] === choice &&
+                              choice === "cannot" && "cant",
+                            dateVotes[option.id] === choice &&
+                              choice !== "cannot" && choice
+                          )}
+                          onClick={() =>
+                            setDateVotes((prev) => ({
+                              ...prev,
+                              [option.id]: choice as VoteChoice,
+                            }))
+                          }
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="mt-0.5 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeMember(member.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
+                ))}
+              </div>
+            </>
+          )}
 
-          <CardFooter>
-            <Button
+          {/* Additional notes */}
+          <h3 className="kc-invite-section-title">Anything the host should know?</h3>
+          <div className="kc-notes-grid">
+            <label className="kc-field">
+              <span>Dietary needs</span>
+              <textarea
+                value={dietaryNeeds}
+                onChange={(event) => setDietaryNeeds(event.target.value)}
+                placeholder="Allergies or restrictions"
+                rows={2}
+              />
+            </label>
+            <label className="kc-field">
+              <span>Arrival notes</span>
+              <textarea
+                value={arrivalNotes}
+                onChange={(event) => setArrivalNotes(event.target.value)}
+                placeholder="When do you plan to arrive?"
+                rows={2}
+              />
+            </label>
+            <label className="kc-field">
+              <span>Departure notes</span>
+              <textarea
+                value={departureNotes}
+                onChange={(event) => setDepartureNotes(event.target.value)}
+                placeholder="When do you plan to leave?"
+                rows={2}
+              />
+            </label>
+          </div>
+
+          {/* Footer CTA */}
+          <div className="kc-invite-footer-cta">
+            <small>You can update this later. We&apos;ll send your household a confirmation.</small>
+            <button
               type="submit"
-              className="w-full"
+              className="btn primary"
               disabled={!name.trim() || !rsvp || submitting}
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                "Submit RSVP"
-              )}
-            </Button>
-          </CardFooter>
+              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send my response
+            </button>
+          </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }
