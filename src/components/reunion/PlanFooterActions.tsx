@@ -12,7 +12,7 @@ export function PlanFooterActions({
   return (
     <footer className="kc-plan-footer">
       <div className="kc-plan-footer-row">
-        <Link href={`/reunion/${reunionId}`}>Back to organizer view</Link>
+        <Link href={`/reunion/${reunionId}`}>Back to reunion</Link>
         <button type="button" onClick={() => window.print()}>
           Print this plan
         </button>

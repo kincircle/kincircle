@@ -186,7 +186,7 @@ export function PotluckSection({
                     {row.claimedByHouseholdName
                       ? `Bringing it: ${row.claimedByHouseholdName}`
                       : row.notes
-                        ? `Open · ${row.notes}`
+                        ? `Open - ${row.notes}`
                         : "Open"}
                   </small>
                 </div>
