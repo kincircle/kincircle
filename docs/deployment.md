@@ -34,7 +34,7 @@ The `web` service should deploy from the repo root on branch `main`.
 ```txt
 Build command:       npm run build
 Pre-deploy command:  npm run db:migrate
-Start command:       npm run start
+Start command:       HOSTNAME=0.0.0.0 npm run start
 Health check:        /api/health
 ```
 

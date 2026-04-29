@@ -54,7 +54,7 @@ railway environment development
 - Railway deploy config lives in `railway.json`
 - Build command: `npm run build`
 - Pre-deploy migration command: `npm run db:migrate`
-- Start command: `npm run start`
+- Start command: `HOSTNAME=0.0.0.0 npm run start`
 - Health check: `/api/health`
 
 Required service variables:
