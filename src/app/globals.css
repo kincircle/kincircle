@@ -377,3 +377,974 @@ h3 em {
   border-radius: 4px;
   transform: skew(-3deg);
 }
+
+/* ============================================================
+   Screen parity styles for dashboard, invite, and final plan.
+   ============================================================ */
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.app-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+.brand {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand .accent {
+  color: var(--primary);
+}
+
+.kc-dashboard-hero {
+  position: relative;
+  min-height: 280px;
+  margin-top: 2rem;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+.kc-dashboard-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, oklch(0.2 0.02 50 / 0.72) 100%);
+}
+.kc-dashboard-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  padding: 2rem;
+}
+.kc-dashboard-hero-content h1 {
+  color: white;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+.kc-dashboard-hero-content p {
+  color: oklch(0.95 0.01 85);
+  margin-top: 0.5rem;
+}
+.kc-dashboard-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 3rem 0 1.25rem;
+}
+.kc-dashboard-section-head h2 {
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+}
+.kc-reunion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+.kc-reunion-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.kc-reunion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.kc-reunion-card-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.kc-reunion-card-body {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.kc-reunion-card-body h3 {
+  font-size: 1.2rem;
+}
+.kc-reunion-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.kc-dashboard-progress {
+  height: 4px;
+  background: var(--muted);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.kc-dashboard-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.kc-create-card {
+  background: var(--bg-warm);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: center;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.kc-create-card:hover {
+  background: var(--bg);
+  border-color: var(--primary);
+}
+.kc-create-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.kc-create-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.kc-create-card p {
+  color: var(--ink-soft);
+  margin: 0;
+}
+.kc-dashboard-tip {
+  background: var(--accent-soft);
+  color: var(--accent-foreground);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.kc-invite-page,
+.kc-invite-status {
+  min-height: 100vh;
+  background: var(--muted);
+}
+.kc-invite-status {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.kc-invite-status > div:not(.kc-invite-message-card) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-soft);
+}
+.kc-invite-message-card {
+  width: min(100%, 430px);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  text-align: center;
+}
+.kc-invite-message-card h1 {
+  margin-top: 0.75rem;
+  font-size: 1.6rem;
+}
+.kc-invite-message-card p {
+  color: var(--ink-soft);
+  margin-top: 0.5rem;
+}
+.kc-invite-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+.kc-invite-hero {
+  position: relative;
+  height: 320px;
+  margin: 0 -1rem;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.kc-invite-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, oklch(0.2 0.03 50 / 0.72) 100%);
+}
+.kc-invite-hero-content {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  padding: 2rem;
+  color: white;
+}
+.kc-invite-hero-content h1 {
+  color: white;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+.kc-invite-host {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.kc-invite-host .avatar {
+  background: oklch(1 0 0 / 0.2);
+  color: white;
+  border-color: transparent;
+  backdrop-filter: blur(6px);
+}
+.kc-invite-card {
+  position: relative;
+  margin-top: -3rem;
+  background: var(--bg);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+}
+.kc-invite-you {
+  text-align: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.kc-invite-you small {
+  color: var(--ink-soft);
+}
+.kc-invite-you h2 {
+  margin-top: 0.25rem;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+}
+.kc-invite-you p,
+.kc-invite-help,
+.kc-invite-row-head p,
+.kc-empty-note {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+.kc-form-error {
+  margin-top: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--destructive-soft);
+  color: var(--destructive);
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+}
+.kc-invite-section-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  margin: 2rem 0 0.5rem;
+}
+.kc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.kc-field span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.kc-field input,
+.kc-field textarea,
+.kc-member-row input,
+.kc-member-row select,
+.kc-location-grid input,
+.kc-potluck-add input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  color: var(--ink);
+}
+.kc-field textarea {
+  resize: vertical;
+}
+.kc-field input:focus,
+.kc-field textarea:focus,
+.kc-member-row input:focus,
+.kc-member-row select:focus,
+.kc-location-grid input:focus,
+.kc-potluck-add input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px oklch(0.55 0.13 40 / 0.15);
+}
+.kc-rsvp-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+.kc-rsvp {
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.kc-rsvp:hover {
+  border-color: var(--border-strong);
+}
+.kc-rsvp.selected {
+  border-color: var(--sage);
+  background: var(--sage-soft);
+}
+.kc-rsvp-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.4rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--muted);
+  color: var(--ink-soft);
+}
+.kc-rsvp-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.kc-rsvp.selected .kc-rsvp-icon {
+  background: var(--sage);
+  color: white;
+}
+.kc-rsvp h4 {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.kc-rsvp small {
+  color: var(--ink-soft);
+}
+.kc-invite-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.kc-members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+.kc-member-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 82px auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+.kc-member-row button {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-soft);
+}
+.kc-member-row button:hover {
+  color: var(--destructive);
+  border-color: var(--destructive);
+}
+.kc-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.5fr 0.55fr;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+.kc-date-vote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+.kc-date-vote {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.kc-date-when {
+  flex: 1;
+  min-width: 0;
+}
+.kc-date-when div {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+.kc-date-when small {
+  color: var(--ink-soft);
+}
+.kc-vote-buttons {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.kc-vote-btn {
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.kc-vote-btn.selected.works {
+  background: var(--sage);
+  color: white;
+  border-color: transparent;
+}
+.kc-vote-btn.selected.prefer {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: transparent;
+}
+.kc-vote-btn.selected.cant {
+  background: var(--destructive-soft);
+  color: var(--destructive);
+  border-color: transparent;
+}
+.kc-notes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+.kc-invite-footer-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.kc-invite-footer-cta small {
+  color: var(--ink-soft);
+}
+
+.kc-plan-page {
+  background: var(--bg);
+  min-height: 100vh;
+}
+.kc-plan-hero {
+  position: relative;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  color: white;
+  padding: 6rem 5vw 4rem;
+}
+.kc-plan-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, oklch(0.2 0.04 30 / 0.3) 0%, oklch(0.2 0.04 30 / 0.55) 60%, oklch(0.42 0.12 38 / 0.7) 100%);
+}
+.kc-plan-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+.kc-plan-preamble {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: oklch(0.92 0.06 80);
+  margin-bottom: 1rem;
+}
+.kc-plan-preamble::before {
+  content: "\2014\00a0";
+}
+.kc-plan-preamble::after {
+  content: "\00a0\2014";
+}
+.kc-plan-hero h1 {
+  color: white;
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  margin-bottom: 1.25rem;
+}
+.kc-plan-hero h1 em {
+  color: var(--accent);
+}
+.kc-plan-where-when {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.4rem;
+  color: oklch(0.95 0.03 80);
+  margin-bottom: 3rem;
+}
+.kc-countdown-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 3rem;
+  background: oklch(1 0 0 / 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.2);
+  border-radius: var(--radius-xl);
+}
+.kc-countdown-num {
+  font-family: var(--font-serif);
+  font-size: clamp(4rem, 10vw, 6rem);
+  font-weight: 300;
+  line-height: 0.95;
+  color: white;
+}
+.kc-countdown-num em {
+  color: var(--accent);
+}
+.kc-countdown-label {
+  font-size: 0.95rem;
+  color: oklch(0.95 0.03 80);
+  margin-top: 0.5rem;
+  text-transform: uppercase;
+}
+.kc-plan-block {
+  padding: 5rem 5vw;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.kc-plan-section-head {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.kc-plan-section-head h2 {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.1;
+  margin-top: 0.5rem;
+}
+.kc-plan-section-head p {
+  color: var(--ink-soft);
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+}
+.kc-plan-card {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.kc-plan-details {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.kc-plan-detail-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.kc-plan-detail-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--primary-deep);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.kc-plan-detail-label {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.kc-plan-detail-value {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+.kc-plan-detail-sub {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin-top: 0.25rem;
+}
+.kc-map-side {
+  background: radial-gradient(circle at 40% 60%, oklch(0.92 0.06 60) 0%, oklch(0.86 0.04 55) 70%);
+  position: relative;
+  min-height: 320px;
+}
+.kc-map-side svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.kc-map-pin {
+  position: absolute;
+  top: 45%;
+  left: 45%;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--primary);
+  border: 3px solid var(--bg);
+  box-shadow: 0 4px 12px oklch(0.3 0.05 40 / 0.3);
+}
+.kc-map-pin::after {
+  content: "";
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.kc-directions {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+.kc-households-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.kc-household-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kc-household-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.kc-household-card .avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 1rem;
+}
+.kc-household-who {
+  flex: 1;
+  min-width: 0;
+}
+.kc-household-who p {
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.kc-household-who small {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-top: 0.2rem;
+  display: block;
+}
+.kc-household-count {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--primary);
+  line-height: 1;
+}
+.kc-total-strip {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.kc-total-stat {
+  text-align: center;
+}
+.kc-total-stat div {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: var(--primary);
+  line-height: 1;
+}
+.kc-total-stat div em {
+  color: var(--accent-deep);
+}
+.kc-total-stat span {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.kc-potluck-band {
+  background: var(--bg-warm);
+  padding: 5rem 5vw;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.kc-potluck-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.kc-potluck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+.kc-potluck-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.kc-potluck-row.claimed {
+  border-color: var(--sage);
+}
+.kc-potluck-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: white;
+}
+.kc-potluck-row.claimed .kc-potluck-check {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.kc-potluck-item {
+  flex: 1;
+  min-width: 0;
+}
+.kc-potluck-item h4 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+.kc-potluck-item small {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+.kc-potluck-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 1rem;
+}
+.kc-potluck-add label {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.kc-updates-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.kc-update-bubble {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.kc-update-bubble > div {
+  flex: 1;
+}
+.kc-update-bubble small {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+.kc-update-bubble small strong {
+  color: var(--ink);
+}
+.kc-update-bubble p {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.kc-plan-empty {
+  text-align: center;
+  color: var(--ink-soft);
+}
+.kc-closer {
+  text-align: center;
+  padding: 6rem 5vw;
+  background: radial-gradient(ellipse at top, oklch(0.92 0.10 80 / 0.4), transparent 60%), var(--bg);
+}
+.kc-closer blockquote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  color: var(--primary-deep);
+  max-width: 640px;
+  margin: 0 auto 0.75rem;
+  line-height: 1.3;
+}
+.kc-closer cite {
+  font-style: normal;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.kc-plan-back-link {
+  display: none;
+}
+.kc-plan-footer {
+  background: var(--ink);
+  color: oklch(0.85 0.02 60);
+  padding: 2rem 5vw;
+  text-align: center;
+}
+.kc-plan-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.kc-plan-footer a,
+.kc-plan-footer button {
+  color: var(--accent);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.kc-plan-footer small {
+  color: oklch(0.65 0.02 60);
+}
+
+@media (max-width: 760px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .kc-dashboard-section-head,
+  .kc-invite-footer-cta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .kc-reunion-grid {
+    grid-template-columns: 1fr;
+  }
+  .kc-rsvp-row,
+  .kc-location-grid,
+  .kc-potluck-add,
+  .kc-plan-card {
+    grid-template-columns: 1fr;
+  }
+  .kc-member-row {
+    grid-template-columns: 1fr 1fr 80px auto;
+    gap: 0.5rem;
+  }
+  .kc-date-vote {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .kc-map-side {
+    min-height: 220px;
+  }
+  .kc-potluck-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .kc-potluck-item {
+    flex-basis: calc(100% - 44px);
+  }
+}
+
+@media (max-width: 520px) {
+  .kc-invite-card,
+  .kc-plan-details,
+  .kc-dashboard-hero-content {
+    padding: 1.25rem;
+  }
+  .kc-rsvp-row,
+  .kc-member-row {
+    grid-template-columns: 1fr;
+  }
+  .kc-member-row button {
+    width: 100%;
+  }
+  .kc-countdown-block {
+    padding: 1.25rem 2rem;
+  }
+}

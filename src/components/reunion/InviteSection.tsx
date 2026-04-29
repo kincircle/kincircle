@@ -1,18 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { sendInvites, revokeInvite } from "@/lib/actions/invite";
 import { expectArray } from "@/lib/response";
 import { toast } from "sonner";
@@ -21,6 +9,19 @@ import type { Invite } from "@/types";
 
 interface InviteSectionProps {
   reunionId: string;
+}
+
+function inviteStatusClass(status: string): string {
+  switch (status) {
+    case "accepted":
+      return "status-badge status-claimed";
+    case "pending":
+      return "status-badge status-pending";
+    case "revoked":
+      return "status-badge bg-[var(--destructive-soft)] text-[var(--destructive)]";
+    default:
+      return "status-badge status-pending";
+  }
 }
 
 export function InviteSection({ reunionId }: InviteSectionProps) {
@@ -96,120 +97,141 @@ export function InviteSection({ reunionId }: InviteSectionProps) {
     }
   }
 
-  function statusBadgeVariant(
-    status: string
-  ): "default" | "secondary" | "destructive" | "outline" {
-    switch (status) {
-      case "accepted":
-        return "default";
-      case "pending":
-        return "secondary";
-      case "revoked":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  }
+  const acceptedCount = invites.filter((invite) => invite.status === "accepted").length;
+  const pendingCount = invites.filter((invite) => invite.status === "pending").length;
+  const inviteSummary = loading
+    ? "Loading invite list..."
+    : invites.length > 0
+      ? `${invites.length} sent / ${acceptedCount} accepted / ${pendingCount} pending`
+      : "0 sent / 0 accepted / 0 pending";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Invitations
-        </CardTitle>
-        <CardDescription>
-          Send email invitations to family members
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Send invites form */}
-        <div className="space-y-2">
-          <Label htmlFor="emails">Email Addresses</Label>
-          <Textarea
+    <div className="card space-y-5">
+      <div className="between flex-col items-start sm:flex-row sm:items-start">
+        <div>
+          <span className="section-eyebrow">Step 1</span>
+          <div className="row">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
+              <Mail className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="text-xl">Invite households</h3>
+              <p className="muted text-sm">
+                Bulk-paste family emails and track who has accepted.
+              </p>
+            </div>
+          </div>
+        </div>
+        <span className="badge muted">{inviteSummary}</span>
+      </div>
+
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSendInvites();
+        }}
+      >
+        <div>
+          <label className="label" htmlFor="emails">
+            Email Addresses
+          </label>
+          <textarea
             id="emails"
+            className="textarea min-h-28 resize-y"
             placeholder={"Enter email addresses separated by commas or new lines\ne.g. aunt.jane@email.com, uncle.bob@email.com"}
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
-            rows={3}
+            rows={4}
           />
-          <Button
-            onClick={handleSendInvites}
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="muted text-sm">
+            Separate addresses with commas or line breaks.
+          </p>
+          <button
+            type="submit"
+            className="btn primary sm disabled:pointer-events-none disabled:opacity-50"
             disabled={sending || !emailInput.trim()}
-            size="sm"
           >
             {sending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Sending...
               </>
             ) : (
               <>
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="h-4 w-4" />
                 Send Invites
               </>
             )}
-          </Button>
+          </button>
         </div>
+      </form>
 
-        {/* Sent invites list */}
-        {invites.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-2">
-              <Label>Sent Invitations ({invites.length})</Label>
-              <div className="space-y-2">
-                {invites.map((invite) => (
-                  <div
-                    key={invite.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate text-sm">{invite.email}</span>
-                      <Badge variant={statusBadgeVariant(invite.status)}>
-                        {invite.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(invite.createdAt).toLocaleDateString()}
-                      </span>
-                      {invite.status === "pending" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleRevoke(invite.id)}
-                          disabled={revokingId === invite.id}
-                        >
-                          {revokingId === invite.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <X className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+      {invites.length > 0 && (
+        <div>
+          <hr className="divider" />
+          <div className="between mb-3">
+            <div>
+              <p className="label mb-0">Sent Invitations ({invites.length})</p>
+              <p className="muted text-sm">
+                Accepted households can fill in their RSVP and details.
+              </p>
             </div>
-          </>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center py-4 text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading invites...
           </div>
-        )}
+          <ul className="space-y-2">
+            {invites.map((invite) => (
+              <li
+                key={invite.id}
+                className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  <span className="truncate text-sm font-medium">
+                    {invite.email}
+                  </span>
+                  <span className={inviteStatusClass(invite.status)}>
+                    {invite.status}
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="muted text-xs">
+                    {new Date(invite.createdAt).toLocaleDateString()}
+                  </span>
+                  {invite.status === "pending" && (
+                    <button
+                      type="button"
+                      aria-label={`Revoke invite for ${invite.email}`}
+                      className="btn ghost sm h-7 w-7 px-0 text-[var(--ink-soft)] hover:text-[var(--destructive)] disabled:pointer-events-none disabled:opacity-50"
+                      onClick={() => void handleRevoke(invite.id)}
+                      disabled={revokingId === invite.id}
+                    >
+                      {revokingId === invite.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-        {!loading && invites.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-2">
-            No invitations sent yet
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      {loading && (
+        <div className="muted flex items-center justify-center py-4">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading invites...
+        </div>
+      )}
+
+      {!loading && invites.length === 0 && (
+        <p className="muted rounded-[var(--radius-md)] border border-dashed border-[var(--border)] py-4 text-center text-sm">
+          No invitations sent yet
+        </p>
+      )}
+    </div>
   );
 }

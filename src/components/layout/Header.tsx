@@ -3,38 +3,47 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
+
+function initials(name: string | null | undefined, email: string | null | undefined) {
+  const source = name?.trim() || email?.split("@")[0] || "KC";
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
 
 export function Header() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
   return (
-    <header className="border-b bg-background">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href={session ? "/dashboard" : "/"} className="text-xl font-bold tracking-tight">
-          KinCircle
+    <header className="app-header">
+      <div className="container between">
+        <Link href={session ? "/dashboard" : "/"} className="brand">
+          Kin<span className="accent">Circle</span>
         </Link>
-        <nav className="flex items-center gap-4">
+        <nav className="row">
           {isPending ? null : session ? (
             <>
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {session.user.email}
-              </span>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">Dashboard</Button>
+              <Link href="/dashboard" className="btn ghost sm">
+                Dashboard
               </Link>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
+                className="btn ghost sm"
                 onClick={() => signOut({ fetchOptions: { onSuccess: () => router.push("/") } })}
               >
-                Sign Out
-              </Button>
+                Sign out
+              </button>
+              <span className="avatar">
+                {initials(session.user.name, session.user.email)}
+              </span>
             </>
           ) : (
-            <Link href="/login">
-              <Button size="sm">Sign In</Button>
+            <Link href="/login" className="btn sm">
+              Sign in
             </Link>
           )}
         </nav>

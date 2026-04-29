@@ -30,6 +30,41 @@ import type { HouseholdMember } from "@/types";
 
 interface HouseholdListProps {
   reunionId: string;
+  /** The reunion organizer's user ID. When provided, the household whose
+   *  `claimedByUserId` matches this value gets a "Hosting" badge. */
+  organizerId?: string;
+}
+
+// Returns the primary status badge for a household row using design-system badge classes.
+// Priority: rsvp status > invitation status (pending = no rsvp yet).
+function householdBadge(household: HouseholdWithMembers): { className: string; label: string } | null {
+  const { rsvpStatus, invitationStatus } = household;
+
+  if (rsvpStatus === "yes") {
+    return { className: "badge sage", label: "Coming" };
+  }
+  if (rsvpStatus === "maybe") {
+    return { className: "badge", label: "Maybe" };
+  }
+  if (rsvpStatus === "no") {
+    // rsvp "no" → muted / no badge; handled inline with strikethrough text
+    return null;
+  }
+  // rsvp still pending — show invite status
+  if (invitationStatus === "pending") {
+    return { className: "badge muted", label: "Pending" };
+  }
+  if (invitationStatus === "accepted") {
+    // claimed row — status text carries the message; no extra badge needed
+    return null;
+  }
+  if (invitationStatus === "not_sent") {
+    return { className: "badge muted", label: "Not sent" };
+  }
+  if (invitationStatus === "revoked" || invitationStatus === "expired") {
+    return { className: "badge muted", label: invitationStatus === "revoked" ? "Revoked" : "Expired" };
+  }
+  return null;
 }
 
 function rsvpBadgeClass(status: string) {
@@ -90,11 +125,12 @@ function invitationLabel(status: string) {
   }
 }
 
+
 function organizerSourceLabel(household: HouseholdWithMembers) {
   return household.createdBy ? "Organizer added" : "Self-registered";
 }
 
-export function HouseholdList({ reunionId }: HouseholdListProps) {
+export function HouseholdList({ reunionId, organizerId }: HouseholdListProps) {
   const router = useRouter();
   const [households, setHouseholds] = useState<HouseholdWithMembers[]>([]);
   const [loading, setLoading] = useState(true);
@@ -251,9 +287,27 @@ export function HouseholdList({ reunionId }: HouseholdListProps) {
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium truncate">
+                        <span
+                          className={
+                            household.rsvpStatus === "no"
+                              ? "font-medium truncate line-through text-muted-foreground"
+                              : "font-medium truncate"
+                          }
+                        >
                           {household.primaryContactName}
                         </span>
+                        {/* Design-system primary badge: Hosting (organizer's household) */}
+                        {organizerId && household.claimedByUserId === organizerId && (
+                          <span className="badge sage">Hosting</span>
+                        )}
+                        {/* Design-system status badge: Coming / Maybe / Pending etc. */}
+                        {(() => {
+                          const badge = householdBadge(household);
+                          return badge ? (
+                            <span className={badge.className}>{badge.label}</span>
+                          ) : null;
+                        })()}
+                        {/* Existing shadcn detail badges (claimed state, source, invite, rsvp) */}
                         {household.claimedAt && (
                           <Badge variant="outline">
                             <UserCheck className="h-3 w-3" />

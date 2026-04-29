@@ -111,14 +111,11 @@ describe("InviteSection", () => {
       expect(screen.getByText("aunt.jane@email.com")).toBeInTheDocument();
     });
 
-    // Find the revoke button (X icon) for the pending invite
-    const revokeButtons = screen.getAllByRole("button");
-    const revokeButton = revokeButtons.find((btn) =>
-      btn.className.includes("h-7 w-7")
-    );
+    const revokeButton = screen.getByRole("button", {
+      name: /revoke invite for aunt\.jane@email\.com/i,
+    });
 
-    expect(revokeButton).toBeInTheDocument();
-    await user.click(revokeButton!);
+    await user.click(revokeButton);
 
     await waitFor(() => {
       expect(revokeInvite).toHaveBeenCalledWith("invite-1");
@@ -257,12 +254,11 @@ describe("InviteSection", () => {
       expect(screen.getByText("uncle.bob@email.com")).toBeInTheDocument();
     });
 
-    // Find the accepted invite row
-    const acceptedRow = screen.getByText("uncle.bob@email.com").closest("div");
-
-    // It should not have a revoke button (X icon button)
-    const revokeButtons = acceptedRow?.querySelectorAll('button');
-    expect(revokeButtons?.length).toBe(0);
+    expect(
+      screen.queryByRole("button", {
+        name: /revoke invite for uncle\.bob@email\.com/i,
+      })
+    ).not.toBeInTheDocument();
   });
 
   it("shows created date for invites", async () => {
@@ -295,12 +291,11 @@ describe("InviteSection", () => {
       expect(screen.getByText("aunt.jane@email.com")).toBeInTheDocument();
     });
 
-    const revokeButtons = screen.getAllByRole("button");
-    const revokeButton = revokeButtons.find((btn) =>
-      btn.className.includes("h-7 w-7")
-    );
+    const revokeButton = screen.getByRole("button", {
+      name: /revoke invite for aunt\.jane@email\.com/i,
+    });
 
-    await user.click(revokeButton!);
+    await user.click(revokeButton);
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Failed to revoke invite");

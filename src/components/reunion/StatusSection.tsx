@@ -2,20 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader2, Lock, CheckCircle, Calendar, MapPin, ExternalLink } from "lucide-react";
+  Loader2,
+  Lock,
+  CheckCircle2,
+  Circle,
+  Calendar,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { lockDate, finalizeReunion } from "@/lib/actions/finalize";
 import { expectArray, expectArrayField, expectRecord } from "@/lib/response";
 import type { DateOption } from "@/types";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface StatusSectionProps {
   reunionId: string;
@@ -45,6 +46,86 @@ function formatDateRange(startDate: string, endDate: string): string {
   if (startMonth !== endMonth) return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
   if (startDay !== endDay) return `${startMonth} ${startDay} - ${endDay}, ${year}`;
   return `${startMonth} ${startDay}, ${year}`;
+}
+
+// Step state types
+type StepState = "done" | "active" | "pending";
+
+interface StepProps {
+  state: StepState;
+  title: string;
+  subtitle: string;
+  action?: React.ReactNode;
+  body?: React.ReactNode;
+}
+
+function StepRow({ state, title, subtitle, action, body }: StepProps) {
+  const isDone = state === "done";
+  const isActive = state === "active";
+
+  return (
+    <div
+      className={cn("rounded-[var(--radius-lg)] border overflow-hidden mb-4", {
+        "border-[var(--border)] bg-[var(--bg)]": !isActive,
+        "border-[var(--primary)] bg-[var(--bg)]": isActive,
+      })}
+      style={
+        isActive
+          ? { boxShadow: "0 0 0 3px oklch(0.55 0.13 40 / 0.10)" }
+          : undefined
+      }
+    >
+      {/* Step header */}
+      <div className="flex items-center gap-4 px-6 py-5">
+        {/* Step icon */}
+        <span
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+          style={{
+            background: isDone
+              ? "var(--sage)"
+              : isActive
+                ? "var(--primary)"
+                : "var(--muted)",
+            color: isDone || isActive ? "white" : "var(--ink-soft)",
+          }}
+        >
+          {isDone ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : isActive ? (
+            <Circle className="h-4 w-4 fill-white" />
+          ) : (
+            <Circle className="h-4 w-4" />
+          )}
+        </span>
+
+        {/* Title + subtitle */}
+        <div className="flex-1 min-w-0">
+          <h3
+            className="text-[1.05rem] leading-tight"
+            style={{ color: isDone ? "var(--ink-soft)" : "var(--ink)" }}
+          >
+            {title}
+          </h3>
+          <small className="mt-0.5 block text-sm" style={{ color: "var(--ink-soft)" }}>
+            {subtitle}
+          </small>
+        </div>
+
+        {/* Optional action button (edit / preview) */}
+        {action && <div className="flex-shrink-0">{action}</div>}
+      </div>
+
+      {/* Expanded body for active step */}
+      {isActive && body && (
+        <div
+          className="px-6 pb-6 pt-5"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
+          {body}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) {
@@ -150,158 +231,195 @@ export function StatusSection({ reunionId, currentStatus }: StatusSectionProps) 
     }
   }
 
-  if (currentStatus === "finalized") {
+  // Derive step states
+  const isFinalized = currentStatus === "finalized";
+  const isDateLocked = currentStatus === "date_locked" || isFinalized;
+  const isCancelled = currentStatus === "cancelled";
+
+  if (isCancelled) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <CardTitle>Reunion Finalized</CardTitle>
-          </div>
-          <CardDescription>
-            This reunion has been finalized. The plan has been shared with all households.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href={`/reunion/${reunionId}/plan`}>
-            <Button variant="outline">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Final Plan
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <StepRow
+        state="pending"
+        title="Reunion Cancelled"
+        subtitle="This reunion has been cancelled."
+        action={<Lock className="h-5 w-5 text-destructive" />}
+      />
     );
   }
 
-  if (currentStatus === "cancelled") {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-destructive" />
-            <CardTitle>Reunion Cancelled</CardTitle>
-          </div>
-          <CardDescription>
-            This reunion has been cancelled.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+  // Step 1: Date locked
+  const step1State: StepState = isDateLocked ? "done" : "active";
+  // Step 2: Location / finalized
+  const step2State: StepState = isFinalized
+    ? "done"
+    : isDateLocked
+      ? "active"
+      : "pending";
+  // Step 3: Plan published (mirrors finalized)
+  const step3State: StepState = isFinalized ? "done" : "pending";
+
+  // Body for the "lock date" active step
+  const lockDateBody = loading ? (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--ink-soft)" }} />
+    </div>
+  ) : dateOptions.length === 0 ? (
+    <p className="text-sm" style={{ color: "var(--ink-soft)", paddingTop: "0.25rem" }}>
+      Add date options first before locking a date.
+    </p>
+  ) : (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        {dateOptions.map((opt) => (
+          <label
+            key={opt.id}
+            className={cn(
+              "flex cursor-pointer items-center gap-3 rounded-[var(--radius-md)] border p-3 transition-colors",
+              selectedDateOptionId === opt.id
+                ? "border-[var(--primary)] bg-[var(--accent-soft)]"
+                : "border-[var(--border)] hover:border-[var(--primary)]"
+            )}
+          >
+            <input
+              type="radio"
+              name="date-option"
+              value={opt.id}
+              checked={selectedDateOptionId === opt.id}
+              onChange={() => setSelectedDateOptionId(opt.id)}
+              className="accent-primary"
+            />
+            <div>
+              <p className="text-sm font-medium">
+                {formatDateRange(opt.startDate, opt.endDate)}
+              </p>
+              {opt.description && (
+                <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                  {opt.description}
+                </p>
+              )}
+            </div>
+          </label>
+        ))}
+      </div>
+      <button
+        className="btn sm"
+        onClick={handleLockDate}
+        disabled={submitting || !selectedDateOptionId}
+      >
+        {submitting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Lock className="h-4 w-4" />
+        )}
+        Lock Date
+      </button>
+    </div>
+  );
+
+  // Body for the "finalize reunion" active step
+  const finalizeBody = loading ? (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--ink-soft)" }} />
+    </div>
+  ) : !locationData ||
+    locationData.centerLat === null ||
+    locationData.centerLng === null ? (
+    <p className="text-sm" style={{ color: "var(--ink-soft)", paddingTop: "0.25rem" }}>
+      No location data available yet. Locations will appear as guests RSVP with their city.
+    </p>
+  ) : (
+    <div className="space-y-4">
+      <div
+        className="rounded-[var(--radius-md)] p-4"
+        style={{ background: "var(--muted)" }}
+      >
+        <p className="mb-1 text-sm font-medium">Suggested Location</p>
+        <p className="text-lg font-semibold">
+          {locationData.centerName ??
+            `${locationData.centerLat.toFixed(4)}, ${locationData.centerLng.toFixed(4)}`}
+        </p>
+      </div>
+      <button
+        className="btn sm"
+        onClick={handleFinalize}
+        disabled={submitting}
+      >
+        {submitting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <CheckCircle2 className="h-4 w-4" />
+        )}
+        Finalize Reunion
+      </button>
+    </div>
+  );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          {currentStatus === "planning" ? (
-            <Calendar className="h-5 w-5 text-muted-foreground" />
+    <div>
+      {/* Step 1 - Lock a date */}
+      <StepRow
+        state={step1State}
+        title="Lock a Date"
+        subtitle={
+          isDateLocked
+            ? "Date confirmed for the reunion"
+            : "Choose a date to lock in for the reunion"
+        }
+        action={
+          step1State === "done" ? (
+            <span className="btn ghost sm">
+              <Calendar className="h-4 w-4" />
+              Edit
+            </span>
+          ) : undefined
+        }
+        body={step1State === "active" ? lockDateBody : undefined}
+      />
+
+      {/* Step 2 - Finalize location */}
+      <StepRow
+        state={step2State}
+        title={isFinalized ? "Location Finalized" : "Finalize Reunion"}
+        subtitle={
+          isFinalized
+            ? "Location confirmed and plan sent to everyone"
+            : isDateLocked
+              ? "Confirm the location and send the final plan"
+              : "Complete date selection first"
+        }
+        action={
+          step2State === "done" ? (
+            <span className="btn ghost sm">
+              <MapPin className="h-4 w-4" />
+              Edit
+            </span>
+          ) : undefined
+        }
+        body={step2State === "active" ? finalizeBody : undefined}
+      />
+
+      {/* Step 3 - Plan published */}
+      <StepRow
+        state={step3State}
+        title="Plan Published"
+        subtitle={
+          isFinalized
+            ? "The final plan has been shared with all households"
+            : "Locks date + location, emails everyone the details"
+        }
+        action={
+          isFinalized ? (
+            <Link href={`/reunion/${reunionId}/plan`} className="btn ghost sm">
+              <ExternalLink className="h-4 w-4" />
+              View Plan
+            </Link>
           ) : (
-            <MapPin className="h-5 w-5 text-muted-foreground" />
-          )}
-          <CardTitle>
-            {currentStatus === "planning" ? "Lock a Date" : "Finalize Reunion"}
-          </CardTitle>
-        </div>
-        <CardDescription>
-          {currentStatus === "planning"
-            ? "Choose a date to lock in for the reunion. This will notify all households."
-            : "Confirm the location and finalize the reunion plan."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        )}
-
-        {!loading && currentStatus === "planning" && (
-          <>
-            {dateOptions.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">
-                Add date options first before locking a date.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  {dateOptions.map((opt) => (
-                    <label
-                      key={opt.id}
-                      className={`flex items-center gap-3 p-3 rounded-md cursor-pointer border transition-colors ${
-                        selectedDateOptionId === opt.id
-                          ? "border-primary bg-primary/5"
-                          : "border-muted hover:border-primary/50"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="date-option"
-                        value={opt.id}
-                        checked={selectedDateOptionId === opt.id}
-                        onChange={() => setSelectedDateOptionId(opt.id)}
-                        className="accent-primary"
-                      />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {formatDateRange(opt.startDate, opt.endDate)}
-                        </p>
-                        {opt.description && (
-                          <p className="text-xs text-muted-foreground">
-                            {opt.description}
-                          </p>
-                        )}
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <Button
-                  onClick={handleLockDate}
-                  disabled={submitting || !selectedDateOptionId}
-                >
-                  {submitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Lock className="h-4 w-4 mr-2" />
-                  )}
-                  Lock Date
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-
-        {!loading && currentStatus === "date_locked" && (
-          <>
-            {!locationData ||
-            locationData.centerLat === null ||
-            locationData.centerLng === null ? (
-              <p className="text-sm text-muted-foreground py-4">
-                No location data available yet. Locations will appear as guests
-                RSVP with their city.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm font-medium mb-1">Suggested Location</p>
-                  <p className="text-lg font-semibold">
-                    {locationData.centerName ??
-                      `${locationData.centerLat.toFixed(4)}, ${locationData.centerLng.toFixed(4)}`}
-                  </p>
-                </div>
-                <Button onClick={handleFinalize} disabled={submitting}>
-                  {submitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Finalize Reunion
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+            <span className="btn ghost sm" style={{ opacity: 0.5, cursor: "default" }}>
+              Preview
+            </span>
+          )
+        }
+      />
+    </div>
   );
 }
