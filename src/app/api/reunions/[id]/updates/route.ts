@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { reunion, household, reunionUpdate } from "@/db/schema";
+import {
+  household,
+  reunion,
+  reunionUpdate,
+  user as userTable,
+} from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -35,8 +40,17 @@ export async function GET(
   }
 
   const updates = await db
-    .select()
+    .select({
+      id: reunionUpdate.id,
+      reunionId: reunionUpdate.reunionId,
+      title: reunionUpdate.title,
+      message: reunionUpdate.message,
+      createdBy: reunionUpdate.createdBy,
+      createdAt: reunionUpdate.createdAt,
+      authorName: userTable.name,
+    })
     .from(reunionUpdate)
+    .leftJoin(userTable, eq(reunionUpdate.createdBy, userTable.id))
     .where(eq(reunionUpdate.reunionId, id))
     .orderBy(desc(reunionUpdate.createdAt));
 
