@@ -98,8 +98,8 @@ export async function lockDate(reunionId: string, dateOptionId: string) {
 export async function finalizeReunion(
   reunionId: string,
   locationName: string,
-  locationLat: number,
-  locationLng: number
+  locationLat: number | null = null,
+  locationLng: number | null = null
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Unauthorized");
@@ -113,11 +113,19 @@ export async function finalizeReunion(
   if (existing.status !== "date_locked")
     throw new Error("Reunion must have a locked date before finalizing");
 
+  const normalizedLocationName = locationName.trim();
+  if (!normalizedLocationName) {
+    throw new Error("Location name is required");
+  }
+  if ((locationLat === null) !== (locationLng === null)) {
+    throw new Error("Location coordinates must be provided together");
+  }
+
   const [updated] = await db
     .update(reunion)
     .set({
       status: "finalized",
-      lockedLocationName: locationName,
+      lockedLocationName: normalizedLocationName,
       lockedLocationLat: locationLat,
       lockedLocationLng: locationLng,
       updatedAt: new Date(),
@@ -184,7 +192,7 @@ export async function finalizeReunion(
           reunionName: existing.name,
           startDate: formatDate(startDateStr),
           endDate: formatDate(endDateStr),
-          locationName,
+          locationName: normalizedLocationName,
           planUrl,
           organizerName: session.user.name ?? "Your family",
         }),

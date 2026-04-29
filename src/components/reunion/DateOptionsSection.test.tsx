@@ -155,13 +155,12 @@ describe("DateOptionsSection", () => {
       expect(screen.getByText(/Jul 4 - 6, 2025/)).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByRole("button");
-    const trashButton = deleteButtons.find((btn) =>
-      btn.querySelector('svg')?.classList.contains('lucide-trash-2')
-    );
+    const trashButton = screen.getByRole("button", {
+      name: /delete date option jul 4 - 6, 2025/i,
+    });
 
     expect(trashButton).toBeInTheDocument();
-    await user.click(trashButton!);
+    await user.click(trashButton);
 
     await waitFor(() => {
       expect(deleteDateOption).toHaveBeenCalledWith("date-1");
@@ -177,7 +176,7 @@ describe("DateOptionsSection", () => {
 
     // The first option should have the leading badge (3 prefer + 2 works = 8 vs 1 prefer + 1 works = 3)
     const leadingBadge = screen.getByText("Leading");
-    const dateOption = leadingBadge.closest("div");
+    const dateOption = leadingBadge.closest(".date-option");
     expect(dateOption).toHaveTextContent("Jul 4 - 6, 2025");
   });
 
@@ -322,12 +321,11 @@ describe("DateOptionsSection", () => {
       expect(screen.getByText(/Jul 4 - 6, 2025/)).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByRole("button");
-    const trashButton = deleteButtons.find((btn) =>
-      btn.querySelector('svg')?.classList.contains('lucide-trash-2')
-    );
+    const trashButton = screen.getByRole("button", {
+      name: /delete date option jul 4 - 6, 2025/i,
+    });
 
-    await user.click(trashButton!);
+    await user.click(trashButton);
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Permission denied");
@@ -385,7 +383,7 @@ describe("DateOptionsSection", () => {
       expect(screen.getByText(/Jul 4 - 6, 2025/)).toBeInTheDocument();
     });
 
-    const voteBars = container.querySelectorAll('[class*="h-2"]');
+    const voteBars = container.querySelectorAll(".bar-track");
     expect(voteBars.length).toBeGreaterThan(0);
   });
 

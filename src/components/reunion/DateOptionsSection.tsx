@@ -1,25 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Calendar,
   Trash2,
   Send,
-  ThumbsUp,
-  ThumbsDown,
-  Minus,
   Loader2,
   Plus,
 } from "lucide-react";
@@ -74,6 +60,10 @@ function formatDateRange(startDate: string, endDate: string): string {
     return `${startMonth} ${startDay} - ${endDay}, ${endYear}`;
   }
   return `${startMonth} ${startDay}, ${endYear}`;
+}
+
+function supportCount(votes: VoteTally): number {
+  return votes.prefer + votes.works;
 }
 
 export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
@@ -223,195 +213,228 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
     : null;
 
   const atLimit = dateOptions.length >= 4;
+  const maxSupportCount = Math.max(
+    0,
+    ...dateOptions.map((opt) => {
+      const tally = votesData.find((v) => v.id === opt.id);
+      return supportCount(
+        tally?.votes ?? { prefer: 0, works: 0, cannot: 0, total: 0 }
+      );
+    })
+  );
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">Loading date options...</span>
-        </CardContent>
-      </Card>
+      <div className="card">
+        <div className="muted flex items-center justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="ml-2">Loading date options...</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Date Options
-            </CardTitle>
-            <CardDescription>
-              Add up to 4 date options for your family to vote on
-            </CardDescription>
-          </div>
-          {dateOptions.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSendReminders}
-              disabled={sendingReminders}
-            >
-              {sendingReminders ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : (
-                <Send className="h-4 w-4 mr-1" />
-              )}
-              Send Reminders
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Add Date Option Form */}
-        {!atLimit && (
-          <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-            <p className="text-sm font-medium">Add a date option</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start-date">Start Date</Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end-date">End Date</Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
+    <div className="card space-y-6">
+      <div className="between flex-col items-start sm:flex-row sm:items-start">
+        <div>
+          <span className="section-eyebrow">Step 2</span>
+          <div className="row">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--primary)]">
+              <Calendar className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="text-xl">Pick a date</h3>
+              <p className="muted text-sm">
+                Add up to 4 date options and watch the household vote tally.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="date-description">Description (optional)</Label>
-              <Input
-                id="date-description"
-                placeholder="e.g., Memorial Day weekend"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+          </div>
+        </div>
+        {dateOptions.length > 0 && (
+          <button
+            type="button"
+            className="btn secondary sm disabled:pointer-events-none disabled:opacity-50"
+            onClick={handleSendReminders}
+            disabled={sendingReminders}
+          >
+            {sendingReminders ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            Send Reminders
+          </button>
+        )}
+      </div>
+
+      {!atLimit && (
+        <form
+          className="space-y-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-warm)] p-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleAdd();
+          }}
+        >
+          <div className="between flex-col items-start sm:flex-row sm:items-center">
+            <div>
+              <p className="font-medium">Add a date option</p>
+              <p className="muted text-sm">
+                Candidate weekends work best for household voting.
+              </p>
+            </div>
+            <span className="badge muted">
+              {dateOptions.length} of 4 options
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="start-date">
+                Start Date
+              </label>
+              <input
+                id="start-date"
+                className="input"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
-            <Button onClick={handleAdd} disabled={adding} size="sm">
-              {adding ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : (
-                <Plus className="h-4 w-4 mr-1" />
-              )}
-              Add Date Option
-            </Button>
+            <div>
+              <label className="label" htmlFor="end-date">
+                End Date
+              </label>
+              <input
+                id="end-date"
+                className="input"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
           </div>
-        )}
-        {atLimit && (
-          <p className="text-sm text-muted-foreground">
-            Maximum of 4 date options reached.
-          </p>
-        )}
+          <div>
+            <label className="label" htmlFor="date-description">
+              Description (optional)
+            </label>
+            <input
+              id="date-description"
+              className="input"
+              placeholder="e.g., Memorial Day weekend"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
 
-        {/* Date Options List with Vote Tallies */}
+          <button
+            type="submit"
+            className="btn primary sm disabled:pointer-events-none disabled:opacity-50"
+            disabled={adding}
+          >
+            {adding ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            Add Date Option
+          </button>
+        </form>
+      )}
+
+      {atLimit && (
+        <p className="muted rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-warm)] px-4 py-3 text-sm">
+          Maximum of 4 date options reached.
+        </p>
+      )}
+
+      <div>
+        <div className="between mb-3">
+          <div>
+            <p className="label mb-0">Date Options ({dateOptions.length})</p>
+            <p className="muted text-sm">
+              The leading card is based on prefer votes plus available votes.
+            </p>
+          </div>
+        </div>
+
         {dateOptions.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="muted rounded-[var(--radius-md)] border border-dashed border-[var(--border)] py-4 text-center text-sm">
             No date options added yet. Add your first option above.
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="date-options">
             {dateOptions.map((opt) => {
               const tally = votesData.find((v) => v.id === opt.id);
-              const votes = tally?.votes ?? { prefer: 0, works: 0, cannot: 0, total: 0 };
+              const votes = tally?.votes ?? {
+                prefer: 0,
+                works: 0,
+                cannot: 0,
+                total: 0,
+              };
               const isWinning = opt.id === winningId && votes.total > 0;
+              const optionSupportCount = supportCount(votes);
+              const barWidth =
+                maxSupportCount > 0
+                  ? Math.round((optionSupportCount / maxSupportCount) * 100)
+                  : 0;
+              const dateLabel = formatDateRange(opt.startDate, opt.endDate);
 
               return (
                 <div
                   key={opt.id}
-                  className={`border rounded-lg p-4 ${
-                    isWinning ? "border-green-500 bg-green-50 dark:bg-green-950/20" : ""
-                  }`}
+                  className={`date-option${isWinning ? " winner" : ""}`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">
-                          {formatDateRange(opt.startDate, opt.endDate)}
-                        </p>
-                        {isWinning && (
-                          <Badge variant="default" className="bg-green-600">
-                            Leading
-                          </Badge>
-                        )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="date-info">
+                        <span className="day">{dateLabel}</span>
+                        <span className="date-detail">
+                          {opt.description ?? "No note added"}
+                        </span>
                       </div>
-                      {opt.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {opt.description}
-                        </p>
-                      )}
-
-                      {/* Vote Tallies */}
-                      <div className="flex items-center gap-3 mt-3">
-                        <div className="flex items-center gap-1 text-sm">
-                          <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
-                          <span className="text-green-700 dark:text-green-400 font-medium">
-                            {votes.prefer}
-                          </span>
-                          <span className="text-muted-foreground">prefer</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Minus className="h-3.5 w-3.5 text-blue-500" />
-                          <span className="text-blue-600 dark:text-blue-400 font-medium">
-                            {votes.works}
-                          </span>
-                          <span className="text-muted-foreground">works</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <ThumbsDown className="h-3.5 w-3.5 text-red-500" />
-                          <span className="text-red-600 dark:text-red-400 font-medium">
-                            {votes.cannot}
-                          </span>
-                          <span className="text-muted-foreground">can&apos;t</span>
-                        </div>
-                        {votes.total > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            ({votes.total} vote{votes.total !== 1 ? "s" : ""})
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Simple vote bar */}
-                      {votes.total > 0 && (
-                        <div className="flex h-2 rounded-full overflow-hidden mt-2 max-w-xs">
-                          {votes.prefer > 0 && (
-                            <div
-                              className="bg-green-500"
-                              style={{ width: `${(votes.prefer / votes.total) * 100}%` }}
-                            />
-                          )}
-                          {votes.works > 0 && (
-                            <div
-                              className="bg-blue-400"
-                              style={{ width: `${(votes.works / votes.total) * 100}%` }}
-                            />
-                          )}
-                          {votes.cannot > 0 && (
-                            <div
-                              className="bg-red-400"
-                              style={{ width: `${(votes.cannot / votes.total) * 100}%` }}
-                            />
-                          )}
-                        </div>
+                      {isWinning && (
+                        <span className="badge">Leading</span>
                       )}
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-destructive shrink-0"
-                      onClick={() => handleDelete(opt.id)}
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className="status-badge status-voted">
+                        {votes.prefer} prefer
+                      </span>
+                      <span className="status-badge status-sage">
+                        {votes.works} works
+                      </span>
+                      <span className="status-badge bg-[var(--destructive-soft)] text-[var(--destructive)]">
+                        {votes.cannot} can&apos;t
+                      </span>
+                      {votes.total > 0 && (
+                        <span className="muted text-xs">
+                          {votes.total} total vote{votes.total !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div
+                      className="vote-bar"
+                      aria-label={`${optionSupportCount} supporting votes`}
+                    >
+                      <div className="bar-track">
+                        <div
+                          className="bar-fill"
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                      <span className="vote-count">{optionSupportCount}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      aria-label={`Delete date option ${dateLabel}`}
+                      className="btn ghost sm h-8 w-8 px-0 text-[var(--ink-soft)] hover:text-[var(--destructive)] disabled:pointer-events-none disabled:opacity-50"
+                      onClick={() => void handleDelete(opt.id)}
                       disabled={deleting === opt.id}
                     >
                       {deleting === opt.id ? (
@@ -419,14 +442,14 @@ export function DateOptionsSection({ reunionId }: DateOptionsSectionProps) {
                       ) : (
                         <Trash2 className="h-4 w-4" />
                       )}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
