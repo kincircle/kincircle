@@ -59,10 +59,10 @@ function formatDateRange(startDate: string, endDate: string) {
   }
 
   if (startMonth !== endMonth) {
-    return `${startMonth} ${start.getDate()} – ${endMonth} ${end.getDate()}, ${year}`;
+    return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${year}`;
   }
 
-  return `${startMonth} ${start.getDate()} – ${end.getDate()}, ${year}`;
+  return `${startMonth} ${start.getDate()} - ${end.getDate()}, ${year}`;
 }
 
 function formatDateSubtext(startDate: string, endDate: string, description: string | null) {
@@ -71,7 +71,7 @@ function formatDateSubtext(startDate: string, endDate: string, description: stri
   const end = new Date(`${endDate}T00:00:00`);
   const startWeekday = start.toLocaleDateString("en-US", { weekday: "long" });
   const endWeekday = end.toLocaleDateString("en-US", { weekday: "long" });
-  return startDate === endDate ? startWeekday : `${startWeekday} – ${endWeekday}`;
+  return startDate === endDate ? startWeekday : `${startWeekday} - ${endWeekday}`;
 }
 
 function getInitials(name: string) {
@@ -161,7 +161,7 @@ export default function InviteRsvpPage() {
       const body = {
         name,
         rsvpStatus: rsvp,
-        partySize: Math.max(1, members.filter((m) => m.name.trim()).length),
+        partySize: 1 + members.filter((m) => m.name.trim()).length,
         city: city || undefined,
         state: state || undefined,
         zipCode: zip || undefined,
@@ -274,7 +274,6 @@ export default function InviteRsvpPage() {
   return (
     <div className="kc-invite-page">
       <div className="kc-invite-shell">
-        {/* ── Hero ── */}
         <section className="kc-invite-hero">
           <Image
             src={heroImage}
@@ -296,10 +295,8 @@ export default function InviteRsvpPage() {
           </div>
         </section>
 
-        {/* ── Card ── */}
         <form className="kc-invite-card" onSubmit={handleSubmit}>
 
-          {/* Household header */}
           <div className="kc-invite-you">
             <small>You&apos;re invited as</small>
             <h2 style={{ marginTop: "0.25rem", fontStyle: "italic" }}>{invitedAs}</h2>
@@ -310,7 +307,6 @@ export default function InviteRsvpPage() {
 
           {error && <div className="kc-form-error">{error}</div>}
 
-          {/* Contact name */}
           <h3 className="kc-invite-section-title">Who should we contact?</h3>
           <label className="kc-field">
             <span>Your name</span>
@@ -322,7 +318,6 @@ export default function InviteRsvpPage() {
             />
           </label>
 
-          {/* RSVP */}
           <h3 className="kc-invite-section-title">Can you make it?</h3>
           <div className="kc-rsvp-row">
             {rsvpOptions.map((option) => (
@@ -340,7 +335,6 @@ export default function InviteRsvpPage() {
             ))}
           </div>
 
-          {/* Members */}
           <h3 className="kc-invite-section-title">Who&apos;s coming with you?</h3>
           <p className="kc-invite-help">Add each person so we can plan food and seating.</p>
 
@@ -388,7 +382,6 @@ export default function InviteRsvpPage() {
             Add another person
           </button>
 
-          {/* Address */}
           <h3 className="kc-invite-section-title" style={{ fontStyle: "italic" }}>
             Where are you traveling from?
           </h3>
@@ -414,7 +407,6 @@ export default function InviteRsvpPage() {
             />
           </div>
 
-          {/* Date voting */}
           {inviteData.dateOptions.length > 0 && (
             <>
               <h3 className="kc-invite-section-title">Which dates work for you?</h3>
@@ -467,7 +459,6 @@ export default function InviteRsvpPage() {
             </>
           )}
 
-          {/* Additional notes */}
           <h3 className="kc-invite-section-title">Anything the host should know?</h3>
           <div className="kc-notes-grid">
             <label className="kc-field">
@@ -499,7 +490,6 @@ export default function InviteRsvpPage() {
             </label>
           </div>
 
-          {/* Footer CTA */}
           <div className="kc-invite-footer-cta">
             <small>You can update this later. We&apos;ll send your household a confirmation.</small>
             <button

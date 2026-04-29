@@ -162,7 +162,6 @@ export default async function ReunionDetailPage({
       : "No households yet";
   const countdownDays = daysUntil(found.lockedDate);
   const nextUp = getNextUpNudge(found.status, householdCount, isOrganizer);
-  const pendingCount = Math.max(householdCount - respondedCount, 0);
   const cloudinaryUploadConfig = isOrganizer
     ? {
         cloudName: getCloudinaryCloudName(),
@@ -263,66 +262,61 @@ export default async function ReunionDetailPage({
               )}
             </div>
 
-            <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-              <div className="card">
-                <div className="py-4 text-center">
-                  <div className="font-serif text-5xl leading-none text-[var(--primary)]">
+            <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+              {/* Countdown card */}
+              <div className="card raised">
+                <div style={{ textAlign: "center", padding: "1rem 0" }}>
+                  <div className="font-serif leading-none" style={{ fontSize: "3rem", color: "var(--primary)" }}>
                     {countdownDays ?? "--"}
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
+                  <div className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
                     {countdownDays === null
-                      ? "days until date is locked"
+                      ? "days to go"
                       : `days until ${formatLockedDateShort(found.lockedDate)}`}
                   </div>
                 </div>
               </div>
 
-              <div className="card">
+              {/* Stats card */}
+              <div className="card raised">
                 <h4 className="mb-4 text-base">By the numbers</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1">
-                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
-                      {totalPartySize}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      people
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
+                    <span className="font-serif text-3xl leading-none" style={{ color: "var(--primary)" }}>
                       {householdCount}
                     </span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
                       households
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
+                    <span className="font-serif text-3xl leading-none" style={{ color: "var(--primary)" }}>
                       {respondedCount}
                     </span>
-                    <span className="text-sm text-muted-foreground">
-                      responded
+                    <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                      RSVPed
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="font-serif text-3xl leading-none text-[var(--primary)]">
-                      {pendingCount}
+                    <span className="font-serif text-3xl leading-none" style={{ color: "var(--primary)" }}>
+                      {totalPartySize}
                     </span>
-                    <span className="text-sm text-muted-foreground">
-                      pending
+                    <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                      people
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="card border-transparent bg-[var(--accent-soft)]">
-                <h4 className="text-base text-[var(--accent-foreground)]">
+              {/* Next up CTA card */}
+              <div className="card raised border-transparent" style={{ background: "var(--accent-soft)" }}>
+                <h4 className="text-base" style={{ color: "var(--accent-foreground)" }}>
                   Next up
                 </h4>
-                <p className="mt-2 text-sm text-[var(--accent-foreground)]">
+                <p className="mt-2 text-sm" style={{ color: "var(--accent-foreground)" }}>
                   {nextUp.text}
                 </p>
-                <a href={nextUp.href} className="btn sm mt-4">
+                <a href={nextUp.href} className="btn sm" style={{ marginTop: "0.75rem" }}>
                   {nextUp.cta}
                 </a>
               </div>
@@ -336,7 +330,7 @@ export default async function ReunionDetailPage({
           </div>
 
           <div className="space-y-6">
-            {isOrganizer && <HouseholdList reunionId={id} />}
+            {isOrganizer && <HouseholdList reunionId={id} organizerId={found.organizerId} />}
             <section id="reunion-updates">
               <UpdatesSection reunionId={id} isOrganizer={isOrganizer} />
             </section>
