@@ -27,6 +27,13 @@ Start the app locally:
 npm run dev
 ```
 
+To run a second dev server alongside the first (e.g. comparing branches), use the isolated mode. It writes build artifacts to `.next-dev/` instead of `.next/` so the two servers don't fight over `.next/dev/lock`, and it auto-picks the next free port starting at 3000:
+
+```bash
+npm run dev:isolated
+npm run dev:isolated -- --port 4000
+```
+
 Useful commands:
 
 ```bash

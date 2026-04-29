@@ -10,7 +10,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_PORT = 3000;
-const MAX_PORT = 3999;
+const PORT_SCAN_LIMIT = 1000;
 const ISOLATED_DIST_DIR = ".next-dev";
 
 function parsePort(value, source) {
@@ -68,13 +68,15 @@ function isPortAvailable(port) {
 }
 
 async function findAvailablePort(startPort) {
-  for (let port = startPort; port <= MAX_PORT; port += 1) {
+  const endPort = Math.min(startPort + PORT_SCAN_LIMIT - 1, 65535);
+
+  for (let port = startPort; port <= endPort; port += 1) {
     if (await isPortAvailable(port)) {
       return port;
     }
   }
 
-  throw new Error(`No available port found from ${startPort} to ${MAX_PORT}`);
+  throw new Error(`No available port found from ${startPort} to ${endPort}`);
 }
 
 function getNextBinary(repoRoot) {
