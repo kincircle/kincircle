@@ -75,6 +75,8 @@ async function selectPotluckItems(reunionId: string) {
       notes: potluckItem.notes,
       claimedByHouseholdId: potluckItem.claimedByHouseholdId,
       claimedByHouseholdName: household.primaryContactName,
+      claimedAt: potluckItem.claimedAt,
+      sortOrder: potluckItem.sortOrder,
       createdByUserId: potluckItem.createdByUserId,
       createdAt: potluckItem.createdAt,
       updatedAt: potluckItem.updatedAt,
@@ -82,7 +84,7 @@ async function selectPotluckItems(reunionId: string) {
     .from(potluckItem)
     .leftJoin(household, eq(potluckItem.claimedByHouseholdId, household.id))
     .where(eq(potluckItem.reunionId, reunionId))
-    .orderBy(asc(potluckItem.createdAt));
+    .orderBy(asc(potluckItem.sortOrder), asc(potluckItem.createdAt));
 
   return rows;
 }
@@ -207,6 +209,7 @@ export async function POST(
         .update(potluckItem)
         .set({
           claimedByHouseholdId: access.currentHousehold?.id,
+          claimedAt: new Date(),
           updatedAt: new Date(),
         })
         .where(eq(potluckItem.id, target.id))
@@ -223,7 +226,7 @@ export async function POST(
 
     const [released] = await tx
       .update(potluckItem)
-      .set({ claimedByHouseholdId: null, updatedAt: new Date() })
+      .set({ claimedByHouseholdId: null, claimedAt: null, updatedAt: new Date() })
       .where(eq(potluckItem.id, target.id))
       .returning();
     return released;
