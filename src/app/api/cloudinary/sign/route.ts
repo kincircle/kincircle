@@ -9,15 +9,23 @@ import { household, reunion } from "@/db/schema";
 
 export const runtime = "nodejs";
 
-const allowedPurposes = new Set(["hero", "date-options", "photos"]);
+const uploadPurposes = ["hero", "date-options", "photos"] as const;
+type UploadPurpose = (typeof uploadPurposes)[number];
+
+const allowedPurposes = new Set<UploadPurpose>(uploadPurposes);
+const organizerOnlyPurposes = new Set<UploadPurpose>(["hero", "date-options"]);
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUploadPurpose(purpose: string): purpose is UploadPurpose {
+  return allowedPurposes.has(purpose as UploadPurpose);
+}
 
 function parseUploadFolder(folder: unknown):
   | {
       folder: string;
       reunionId: string;
-      purpose: string;
+      purpose: UploadPurpose;
     }
   | undefined {
   if (typeof folder !== "string") return undefined;
@@ -28,12 +36,11 @@ function parseUploadFolder(folder: unknown):
 
   const [root, reunionId, purpose] = parts;
 
-  if (
-    root !== "kincircle" ||
-    !uuidPattern.test(reunionId) ||
-    !purpose ||
-    !allowedPurposes.has(purpose)
-  ) {
+  if (root !== "kincircle" || !uuidPattern.test(reunionId)) {
+    return undefined;
+  }
+
+  if (!isUploadPurpose(purpose)) {
     return undefined;
   }
 
@@ -76,7 +83,7 @@ export async function POST(req: Request) {
   }
 
   const isOrganizer = found.organizerId === session.user.id;
-  if (folder.purpose === "hero" && !isOrganizer) {
+  if (organizerOnlyPurposes.has(folder.purpose) && !isOrganizer) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
