@@ -18,7 +18,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
-export function CreateReunionDialog() {
+export function CreateReunionDialog({
+  trigger = "button",
+}: {
+  trigger?: "button" | "card";
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -49,9 +53,29 @@ export function CreateReunionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>
-        <Plus className="mr-2 h-4 w-4" />
-        New Reunion
+      <DialogTrigger
+        render={
+          trigger === "card" ? (
+            <button type="button" className="kc-create-card" />
+          ) : (
+            <Button />
+          )
+        }
+      >
+        {trigger === "card" ? (
+          <>
+            <div className="kc-create-card-icon">
+              <Plus className="h-5 w-5" />
+            </div>
+            <h3>Start a new reunion</h3>
+            <p>Name it, invite the families, pick a date. Takes about 3 minutes.</p>
+          </>
+        ) : (
+          <>
+            <Plus className="mr-2 h-4 w-4" />
+            New reunion
+          </>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
