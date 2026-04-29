@@ -247,7 +247,7 @@ export default async function ReunionDetailPage({
                     <DateOptionsSection reunionId={id} />
                   </section>
                   <section id="reunion-location">
-                    <LocationSection reunionId={id} />
+                    <LocationSection reunionId={id} isOrganizer={isOrganizer} />
                   </section>
                 </>
               ) : (
@@ -256,7 +256,7 @@ export default async function ReunionDetailPage({
                     <VotingSection reunionId={id} />
                   </section>
                   <section id="reunion-location">
-                    <LocationSection reunionId={id} />
+                    <LocationSection reunionId={id} isOrganizer={isOrganizer} />
                   </section>
                 </>
               )}
