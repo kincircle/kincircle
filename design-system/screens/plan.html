@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Plan — Zimmerman Summer Reunion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Nunito+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" />
+<link rel="stylesheet" href="../tokens.css" />
+<link rel="stylesheet" href="../primitives.css" />
+<link rel="stylesheet" href="../voice.css" />
+<style>
+  /* ============ HERO ============ */
+  .plan-hero {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    color: white;
+    padding: 6rem 5vw 4rem;
+  }
+  .plan-hero .bg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    z-index: 0;
+  }
+  .plan-hero::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, oklch(0.2 0.04 30 / 0.3) 0%, oklch(0.2 0.04 30 / 0.55) 60%, oklch(0.42 0.12 38 / 0.7) 100%);
+    z-index: 1;
+  }
+  .plan-hero > .inner { position: relative; z-index: 2; max-width: 760px; }
+
+  .plan-hero .preamble {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: oklch(0.92 0.06 80);
+    margin-bottom: 1rem;
+  }
+  .plan-hero .preamble::before { content: '\2014\00a0'; }
+  .plan-hero .preamble::after { content: '\00a0\2014'; }
+
+  .plan-hero h1 {
+    color: white;
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-weight: 400;
+    line-height: 1.05;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.025em;
+  }
+  .plan-hero h1 em { color: var(--accent); font-style: italic; }
+
+  .plan-hero .where-when {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: oklch(0.95 0.03 80);
+    margin-bottom: 3rem;
+  }
+
+  .countdown-block {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    background: oklch(1 0 0 / 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(1 0 0 / 0.2);
+    border-radius: var(--radius-xl);
+  }
+  .countdown-block .num {
+    font-family: var(--font-serif);
+    font-size: clamp(4rem, 10vw, 6rem);
+    font-weight: 300;
+    line-height: 0.95;
+    color: white;
+    letter-spacing: -0.04em;
+  }
+  .countdown-block .num em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .countdown-block .lbl {
+    font-size: 0.95rem;
+    color: oklch(0.95 0.03 80);
+    margin-top: 0.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ============ SECTIONS ============ */
+  section.plan-block {
+    padding: 5rem 5vw;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .plan-section-head {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  .plan-section-head h2 {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 400;
+    line-height: 1.1;
+    margin-top: 0.5rem;
+  }
+  .plan-section-head h2 em { font-style: italic; color: var(--primary); }
+  .plan-section-head p {
+    color: var(--ink-soft);
+    margin-top: 0.5rem;
+    font-size: 1.05rem;
+  }
+
+  /* ============ PLAN CARD (date + location + map) ============ */
+  .plan-card {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .plan-card .details {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .plan-card .detail-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .plan-card .detail-row .icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+    color: var(--primary-deep);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .plan-card .detail-row .label {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin: 0 0 0.25rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .plan-card .detail-row .value {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.3;
+  }
+  .plan-card .detail-row .sub {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-top: 0.25rem;
+  }
+  .plan-card .map-side {
+    background: radial-gradient(circle at 40% 60%, oklch(0.92 0.06 60) 0%, oklch(0.86 0.04 55) 70%);
+    position: relative;
+    min-height: 320px;
+  }
+  .plan-card .map-pin {
+    position: absolute;
+    top: 45%; left: 45%;
+    width: 32px; height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--primary);
+    border: 3px solid var(--bg);
+    box-shadow: 0 4px 12px oklch(0.3 0.05 40 / 0.3);
+  }
+  .plan-card .map-pin::after {
+    content: '';
+    position: absolute;
+    inset: 25%;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+  .plan-card .map-side svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+  .plan-card .directions {
+    position: absolute;
+    bottom: 1.25rem; left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  @media (max-width: 760px) {
+    .plan-card { grid-template-columns: 1fr; }
+    .plan-card .map-side { min-height: 220px; }
+  }
+
+  /* ============ HOUSEHOLDS GRID ============ */
+  .households-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .household-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .household-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .household-card .avatar { width: 48px; height: 48px; font-size: 1rem; }
+  .household-card .who { flex: 1; min-width: 0; }
+  .household-card .who .name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .household-card .who .where {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin-top: 0.2rem;
+  }
+  .household-card .count {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: var(--primary);
+    line-height: 1;
+  }
+
+  .total-strip {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .total-strip .stat .num {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .total-strip .stat .num em { color: var(--accent-deep); font-style: italic; }
+  .total-strip .stat .lbl {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 0.25rem;
+  }
+
+  /* ============ POTLUCK ============ */
+  .potluck-band {
+    background: var(--bg-warm);
+    padding: 5rem 5vw;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .potluck-inner { max-width: 900px; margin: 0 auto; }
+  .potluck-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .potluck-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s ease;
+  }
+  .potluck-row.claimed { border-color: var(--sage); }
+  .potluck-row .check {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: white;
+  }
+  .potluck-row.claimed .check {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+  .potluck-row .item {
+    flex: 1;
+  }
+  .potluck-row .item h4 {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  .potluck-row .item small {
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+  }
+
+  /* ============ UPDATES ============ */
+  .updates-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .update-bubble {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .update-bubble .body { flex: 1; }
+  .update-bubble .body small {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .update-bubble .body small strong { color: var(--ink); }
+  .update-bubble .body p {
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  /* ============ CLOSER ============ */
+  .closer {
+    text-align: center;
+    padding: 6rem 5vw;
+    background:
+      radial-gradient(ellipse at top, oklch(0.92 0.10 80 / 0.4), transparent 60%),
+      var(--bg);
+  }
+  .closer blockquote {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    color: var(--primary-deep);
+    max-width: 640px;
+    margin: 0 auto 0.75rem;
+    line-height: 1.3;
+  }
+  .closer cite {
+    font-style: normal;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  /* ============ FOOTER NAV ============ */
+  .plan-footer {
+    background: var(--ink);
+    color: oklch(0.85 0.02 60);
+    padding: 2rem 5vw;
+    text-align: center;
+  }
+  .plan-footer a { color: var(--accent); text-decoration: none; }
+  .plan-footer .row { justify-content: center; gap: 2rem; margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="plan-hero">
+  <img class="bg" src="../../public/images/Outdoor_gathering_banner_ratio_219_prompt_wide_cin_8fd89a70be.jpeg" alt="" />
+  <div class="inner">
+    <div class="preamble">It's official</div>
+    <h1>The <em>Zimmerman Summer Reunion</em></h1>
+    <p class="where-when">Saturday, August 16, 2026 &middot; Lake Anna State Park</p>
+
+    <div class="countdown-block">
+      <span class="num"><em>42</em></span>
+      <span class="lbl">days to go</span>
+    </div>
+  </div>
+</section>
+
+<!-- PLAN CARD -->
+<section class="plan-block">
+  <div class="plan-section-head">
+    <span class="section-eyebrow">The plan</span>
+    <h2>Mark your calendars, <em>pack the cooler.</em></h2>
+  </div>
+
+  <div class="plan-card">
+    <div class="details">
+
+      <div class="detail-row">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="16" rx="2"/>
+            <path d="M3 9h18M8 3v4M16 3v4"/>
+          </svg>
+        </div>
+        <div>
+          <p class="label">When</p>
+          <p class="value">Saturday, August 16, 2026</p>
+          <p class="sub">Doors open 4:00 PM &middot; Dinner at 6:00 PM</p>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div>
+          <p class="label">Where</p>
+          <p class="value">Lake Anna State Park &mdash; Pavilion B</p>
+          <p class="sub">6800 Lawyers Rd, Spotsylvania, VA 22551</p>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div>
+          <p class="label">Driving from your place</p>
+          <p class="value">About 1h 36m</p>
+          <p class="sub">Atlanta, GA &rarr; Spotsylvania, VA</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="map-side">
+      <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <path d="M 50 80 Q 100 60 160 80 L 220 70 Q 280 75 340 90 L 360 130 Q 350 170 330 200 L 280 220 Q 220 230 160 215 L 100 200 Q 60 170 50 130 Z"
+              fill="oklch(0.78 0.05 70 / 0.4)"
+              stroke="oklch(0.55 0.08 50)"
+              stroke-width="1.5"
+              stroke-dasharray="2 3"/>
+        <path d="M 60 200 L 180 165 L 220 145" stroke="oklch(0.55 0.13 40 / 0.5)" stroke-width="2" fill="none" stroke-dasharray="4 4"/>
+      </svg>
+      <div class="map-pin"></div>
+      <a href="#" class="btn primary directions">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+        Get directions
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- WHO'S COMING -->
+<section class="plan-block">
+  <div class="plan-section-head">
+    <span class="section-eyebrow">We've got a full house</span>
+    <h2>Who's <em>coming.</em></h2>
+  </div>
+
+  <div class="households-grid">
+
+    <div class="household-card">
+      <span class="avatar">BZ</span>
+      <div class="who">
+        <p class="name">The Zimmermans <span class="badge sage" style="margin-left: 0.4rem;">host</span></p>
+        <p class="where">Brooklyn, NY</p>
+      </div>
+      <span class="count">3</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">PH</span>
+      <div class="who">
+        <p class="name">Aunt Phyllis</p>
+        <p class="where">Richmond, VA</p>
+      </div>
+      <span class="count">1</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">MT</span>
+      <div class="who">
+        <p class="name">The Thompsons</p>
+        <p class="where">Atlanta, GA</p>
+      </div>
+      <span class="count">5</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">DC</span>
+      <div class="who">
+        <p class="name">Darius &amp; Em</p>
+        <p class="where">Washington, DC</p>
+      </div>
+      <span class="count">2</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">UM</span>
+      <div class="who">
+        <p class="name">Uncle Marcus</p>
+        <p class="where">Charlotte, NC</p>
+      </div>
+      <span class="count">4</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">JS</span>
+      <div class="who">
+        <p class="name">The Jacksons</p>
+        <p class="where">Baltimore, MD</p>
+      </div>
+      <span class="count">6</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">KW</span>
+      <div class="who">
+        <p class="name">Cousin Kenya</p>
+        <p class="where">Norfolk, VA</p>
+      </div>
+      <span class="count">3</span>
+    </div>
+
+    <div class="household-card">
+      <span class="avatar">TR</span>
+      <div class="who">
+        <p class="name">The Robinsons</p>
+        <p class="where">Philadelphia, PA</p>
+      </div>
+      <span class="count">7</span>
+    </div>
+
+  </div>
+
+  <div class="total-strip">
+    <div class="stat"><div class="num">8</div><div class="lbl">households</div></div>
+    <div class="stat"><div class="num">31</div><div class="lbl">people</div></div>
+    <div class="stat"><div class="num">19</div><div class="lbl">adults</div></div>
+    <div class="stat"><div class="num">12</div><div class="lbl">kids</div></div>
+    <div class="stat"><div class="num"><em>4</em></div><div class="lbl">states</div></div>
+  </div>
+</section>
+
+<!-- POTLUCK -->
+<section class="potluck-band">
+  <div class="potluck-inner">
+    <div class="plan-section-head">
+      <span class="section-eyebrow">Bring something delicious</span>
+      <h2>The <em>potluck.</em></h2>
+      <p>Brandon's covering the main entree. Sign up for what you'll bring so we don't end up with seven mac &amp; cheeses.</p>
+    </div>
+
+    <div class="potluck-list">
+
+      <div class="potluck-row claimed">
+        <div class="check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="item">
+          <h4>Mac &amp; cheese</h4>
+          <small>Bringing it: Maya Thompson</small>
+        </div>
+        <span class="badge sage">Claimed</span>
+      </div>
+
+      <div class="potluck-row claimed">
+        <div class="check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="item">
+          <h4>Cornbread</h4>
+          <small>Bringing it: Aunt Phyllis</small>
+        </div>
+        <span class="badge sage">Claimed</span>
+      </div>
+
+      <div class="potluck-row claimed">
+        <div class="check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="item">
+          <h4>Sweet tea (5 gallons)</h4>
+          <small>Bringing it: Darius &amp; Em</small>
+        </div>
+        <span class="badge sage">Claimed</span>
+      </div>
+
+      <div class="potluck-row">
+        <div class="check"></div>
+        <div class="item">
+          <h4>Collard greens</h4>
+          <small>Open &middot; serves about 15</small>
+        </div>
+        <button class="btn ghost sm">Sign me up</button>
+      </div>
+
+      <div class="potluck-row">
+        <div class="check"></div>
+        <div class="item">
+          <h4>Dessert (cobbler / pies)</h4>
+          <small>Open &middot; one or two will do it</small>
+        </div>
+        <button class="btn ghost sm">Sign me up</button>
+      </div>
+
+      <div class="potluck-row">
+        <div class="check"></div>
+        <div class="item">
+          <h4>Cooler with ice + drinks for kids</h4>
+          <small>Open</small>
+        </div>
+        <button class="btn ghost sm">Sign me up</button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- UPDATES -->
+<section class="plan-block">
+  <div class="plan-section-head">
+    <span class="section-eyebrow">From the group</span>
+    <h2>Latest <em>updates.</em></h2>
+  </div>
+
+  <div class="updates-stack">
+
+    <div class="update-bubble">
+      <span class="avatar">BZ</span>
+      <div class="body">
+        <small><strong>Brandon Zimmerman</strong> &middot; 2 days ago</small>
+        <p>We'll cover the main entree (BBQ pulled pork + grilled chicken). Please bring a side or dessert if you can. Pavilion B has covered seating for 40, so we're set rain or shine.</p>
+      </div>
+    </div>
+
+    <div class="update-bubble">
+      <span class="avatar">MT</span>
+      <div class="body">
+        <small><strong>Maya Thompson</strong> &middot; 5 days ago</small>
+        <p>Kids are SO excited. We'll bring the cornhole set and a couple of coolers. Anyone else bringing yard games?</p>
+      </div>
+    </div>
+
+    <div class="update-bubble">
+      <span class="avatar">PH</span>
+      <div class="body">
+        <small><strong>Aunt Phyllis</strong> &middot; 1 week ago</small>
+        <p>Found my mama's old reunion photo album from '88. Bringing it. Y'all are going to want to see what we looked like.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CLOSER -->
+<section class="closer">
+  <blockquote>See you under the string lights.</blockquote>
+  <cite>&mdash; Brandon</cite>
+</section>
+
+<!-- FOOTER -->
+<footer class="plan-footer">
+  <div class="row">
+    <a href="reunion-detail.html">Back to organizer view</a>
+    <a href="#">Print this plan</a>
+    <a href="#">Add to calendar</a>
+  </div>
+  <small style="color: oklch(0.65 0.02 60);">KinCircle &middot; Made with warm light.</small>
+</footer>
+
+</body>
+</html>
