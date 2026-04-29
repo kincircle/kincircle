@@ -19,6 +19,20 @@ export function getBetterAuthUrl(): string {
   return readRequiredServerEnv("BETTER_AUTH_URL", "auth callbacks and redirects");
 }
 
+export function getAppBaseUrl(): string {
+  const explicitUrl =
+    readOptionalServerEnv("NEXT_PUBLIC_APP_URL") ??
+    readOptionalServerEnv("BETTER_AUTH_URL");
+  const vercelUrl = readOptionalServerEnv("VERCEL_URL");
+  const rawUrl = explicitUrl ?? (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000");
+
+  try {
+    return new URL(rawUrl).origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
 export function getDatabaseUrl(): string {
   return readRequiredServerEnv("DATABASE_URL", "database access");
 }
