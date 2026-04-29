@@ -1,6 +1,13 @@
 import { db } from "@/lib/db";
-import { reunion, invite, household, householdMember } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  reunion,
+  invite,
+  household,
+  householdMember,
+  dateOption,
+  dateVote,
+} from "@/db/schema";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { hashToken } from "@/lib/tokens";
 import { geocodeAddress } from "@/lib/geocode";
 import { sendEmail } from "@/lib/email";
@@ -8,6 +15,7 @@ import { RSVPConfirmationEmail } from "@/emails/RSVPConfirmationEmail";
 import { NextResponse } from "next/server";
 
 type InviteRsvpStatus = "yes" | "no" | "maybe";
+type InviteVoteChoice = "works" | "prefer" | "cannot";
 
 type InviteMemberInput = {
   name?: unknown;
@@ -15,8 +23,17 @@ type InviteMemberInput = {
   age?: unknown;
 };
 
+type InviteDateVoteInput = {
+  dateOptionId?: unknown;
+  vote?: unknown;
+};
+
 function isInviteRsvpStatus(value: unknown): value is InviteRsvpStatus {
   return value === "yes" || value === "no" || value === "maybe";
+}
+
+function isInviteVoteChoice(value: unknown): value is InviteVoteChoice {
+  return value === "works" || value === "prefer" || value === "cannot";
 }
 
 export async function GET(
@@ -57,15 +74,31 @@ export async function GET(
     .from(reunion)
     .where(eq(reunion.id, inviteRow.reunionId));
 
+  const [householdRow] = inviteRow.householdId
+    ? await db
+        .select()
+        .from(household)
+        .where(eq(household.id, inviteRow.householdId))
+    : [];
+
+  const dateOptions = await db
+    .select()
+    .from(dateOption)
+    .where(eq(dateOption.reunionId, inviteRow.reunionId))
+    .orderBy(asc(dateOption.startDate));
+
   return NextResponse.json({
     reunion: {
       name: reunionRow?.name ?? "Family Reunion",
       description: reunionRow?.description ?? null,
+      heroImageUrl: reunionRow?.heroImageUrl ?? null,
     },
     invite: {
       email: inviteRow.email,
+      householdName: householdRow?.primaryContactName ?? null,
     },
     reunionId: inviteRow.reunionId,
+    dateOptions,
   });
 }
 
@@ -114,6 +147,7 @@ export async function POST(
     arrivalNotes,
     departureNotes,
     members,
+    dateVotes,
   } = body;
 
   if (!name || typeof name !== "string") {
@@ -178,6 +212,52 @@ export async function POST(
       age: typeof member.age === "number" ? member.age : null,
     }));
 
+  const rawDateVotes = Array.isArray(dateVotes)
+    ? (dateVotes as InviteDateVoteInput[])
+    : [];
+  const normalizedDateVotes = rawDateVotes
+    .filter(
+      (vote) =>
+        typeof vote.dateOptionId === "string" && isInviteVoteChoice(vote.vote)
+    )
+    .map((vote) => ({
+      dateOptionId: vote.dateOptionId as string,
+      vote: vote.vote as InviteVoteChoice,
+    }));
+
+  if (rawDateVotes.length !== normalizedDateVotes.length) {
+    return NextResponse.json(
+      { error: "dateVotes must include valid dateOptionId and vote values" },
+      { status: 400 }
+    );
+  }
+
+  if (normalizedDateVotes.length > 0) {
+    const validDateOptions = await db
+      .select({ id: dateOption.id })
+      .from(dateOption)
+      .where(
+        and(
+          eq(dateOption.reunionId, inviteRow.reunionId),
+          inArray(
+            dateOption.id,
+            normalizedDateVotes.map((vote) => vote.dateOptionId)
+          )
+        )
+      );
+
+    const validIds = new Set(validDateOptions.map((option) => option.id));
+    if (
+      normalizedDateVotes.some((vote) => !validIds.has(vote.dateOptionId)) ||
+      validDateOptions.length !== normalizedDateVotes.length
+    ) {
+      return NextResponse.json(
+        { error: "dateVotes contain unknown date options" },
+        { status: 400 }
+      );
+    }
+  }
+
   const newHousehold = await db.transaction(async (tx) => {
     const householdValues = {
       primaryContactName: name.trim(),
@@ -225,6 +305,19 @@ export async function POST(
         normalizedMembers.map((member) => ({
           householdId: acceptedHousehold.id,
           ...member,
+        }))
+      );
+    }
+
+    if (normalizedDateVotes.length > 0) {
+      await tx
+        .delete(dateVote)
+        .where(eq(dateVote.householdId, acceptedHousehold.id));
+
+      await tx.insert(dateVote).values(
+        normalizedDateVotes.map((vote) => ({
+          householdId: acceptedHousehold.id,
+          ...vote,
         }))
       );
     }
