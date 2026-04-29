@@ -6,6 +6,7 @@ import {
   householdMember,
   dateOption,
   dateVote,
+  user,
 } from "@/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { hashToken } from "@/lib/tokens";
@@ -87,6 +88,13 @@ export async function GET(
     .where(eq(dateOption.reunionId, inviteRow.reunionId))
     .orderBy(asc(dateOption.startDate));
 
+  const [organizer] = reunionRow
+    ? await db
+        .select({ name: user.name })
+        .from(user)
+        .where(eq(user.id, reunionRow.organizerId))
+    : [];
+
   return NextResponse.json({
     reunion: {
       name: reunionRow?.name ?? "Family Reunion",
@@ -96,6 +104,7 @@ export async function GET(
     invite: {
       email: inviteRow.email,
       householdName: householdRow?.primaryContactName ?? null,
+      invitedBy: organizer?.name ?? null,
     },
     reunionId: inviteRow.reunionId,
     dateOptions,
@@ -342,7 +351,7 @@ export async function POST(
   try {
     await sendEmail({
       to: inviteRow.email,
-      subject: `RSVP Confirmed – ${reunionRow?.name ?? "Family Reunion"}`,
+      subject: `RSVP Confirmed - ${reunionRow?.name ?? "Family Reunion"}`,
       react: RSVPConfirmationEmail({
         reunionName: reunionRow?.name ?? "Family Reunion",
         claimUrl,
