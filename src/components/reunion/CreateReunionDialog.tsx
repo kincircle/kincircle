@@ -58,7 +58,7 @@ export function CreateReunionDialog({
           trigger === "card" ? (
             <button type="button" className="kc-create-card" />
           ) : (
-            <Button />
+            <button type="button" className="btn primary" />
           )
         }
       >

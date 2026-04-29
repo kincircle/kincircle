@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { reunion, household, dateOption } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { reunion, household, dateOption, user as userTable } from "@/db/schema";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
@@ -27,6 +27,8 @@ type ReunionCardView = {
   totalPartySize: number;
   dateOptionCount: number;
   memberHousehold: DashboardHousehold | null;
+  organizerName: string | null;
+  organizerEmail: string | null;
   imageUrl: string;
 };
 
@@ -49,32 +51,63 @@ function formatDateLabel(card: ReunionCardView) {
   return "Planning";
 }
 
-function statusCopy(status: string) {
+function statusCopy(status: DashboardReunion["status"]) {
   if (status === "date_locked") return "Date locked";
   if (status === "finalized") return "Finalized";
   if (status === "cancelled") return "Cancelled";
   return "Planning";
 }
 
-function progressFor(card: ReunionCardView) {
-  if (card.reunion.status === "finalized") return 100;
-  if (card.reunion.status === "date_locked" && card.reunion.lockedLocationName) {
-    return 80;
+function badgeFor(card: ReunionCardView) {
+  if (card.role === "member") {
+    return { label: "Member", className: "badge muted dot" };
   }
-  if (card.reunion.status === "date_locked") return 70;
-  if (card.dateOptionCount > 0 && card.respondedCount > 0) return 45;
-  if (card.householdCount > 0) return 30;
-  return 12;
+
+  const tone =
+    card.reunion.status === "date_locked" || card.reunion.status === "finalized"
+      ? " sage"
+      : card.reunion.status === "cancelled"
+        ? " muted"
+        : "";
+
+  return { label: statusCopy(card.reunion.status), className: `badge dot${tone}` };
 }
 
-function nextStepCopy(card: ReunionCardView) {
-  if (card.reunion.status === "finalized") return "Finalized - see plan";
-  if (card.reunion.status === "date_locked" && card.reunion.lockedLocationName) {
-    return "Step 4 of 4 - finalize reunion";
+function hasLockedDate(card: ReunionCardView) {
+  return Boolean(
+    card.reunion.lockedDate ||
+      card.reunion.lockedDateOptionId ||
+      card.reunion.status === "date_locked" ||
+      card.reunion.status === "finalized"
+  );
+}
+
+function stepFor(card: ReunionCardView) {
+  if (card.reunion.status === "finalized") {
+    return { caption: "Finalized — see plan", progress: 100, showProgress: true };
   }
-  if (card.reunion.status === "date_locked") return "Step 3 of 4 - pick a location";
-  if (card.dateOptionCount > 0) return "Step 2 of 4 - date voting open";
-  return "Step 1 of 4 - collecting RSVPs";
+
+  if (card.role === "member") {
+    const caption =
+      card.reunion.status === "date_locked"
+        ? "Date locked — final plan coming soon"
+        : "Planning underway";
+    return { caption, progress: 0, showProgress: false };
+  }
+
+  if (hasLockedDate(card) && card.reunion.lockedLocationName) {
+    return { caption: "Step 4 of 4 — send the final plan", progress: 90, showProgress: true };
+  }
+
+  if (hasLockedDate(card)) {
+    return { caption: "Step 3 of 4 — pick a location", progress: 75, showProgress: true };
+  }
+
+  if (card.householdCount > 0) {
+    return { caption: "Step 2 of 4 — pick a date", progress: 50, showProgress: true };
+  }
+
+  return { caption: "Step 1 of 4 — invite households", progress: 25, showProgress: true };
 }
 
 function reunionHref(card: ReunionCardView) {
@@ -85,22 +118,72 @@ function reunionHref(card: ReunionCardView) {
 
 function metaCopy(card: ReunionCardView) {
   if (card.role === "organizer") {
-    return `Hosted by you - ${card.householdCount} household${
+    if (card.householdCount === 0) {
+      return "Hosted by you · no households invited yet";
+    }
+
+    const householdLabel = `${card.householdCount} household${
       card.householdCount === 1 ? "" : "s"
-    } - est. ${card.totalPartySize} people`;
+    }${card.reunion.status === "planning" ? " invited" : ""}`;
+    const detail =
+      card.reunion.status === "planning"
+        ? `${card.respondedCount} RSVP${card.respondedCount === 1 ? "" : "s"} in`
+        : `est. ${card.totalPartySize} people`;
+
+    return `Hosted by you · ${householdLabel} · ${detail}`;
   }
 
   const partySize = card.memberHousehold?.partySize ?? 1;
   const rsvp = card.memberHousehold?.rsvpStatus;
+  const organizer = firstName(card.organizerName, card.organizerEmail);
   const response =
     rsvp === "yes"
       ? `you said yes for ${partySize}`
       : rsvp === "maybe"
         ? `you said maybe for ${partySize}`
         : rsvp === "no"
-          ? "you cannot make it"
-          : "RSVP pending";
-  return `Member - ${response}`;
+        ? "you cannot make it"
+        : "RSVP pending";
+  return `Hosted by ${organizer} · ${response}`;
+}
+
+function weeksUntil(dateString: string | null) {
+  if (!dateString) return null;
+
+  const target = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(
+    0,
+    Math.ceil((target.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000))
+  );
+}
+
+function heroCopy(card: ReunionCardView | undefined) {
+  if (!card) {
+    return "Start your first reunion and get the family moving from scattered texts to one shared plan.";
+  }
+
+  if (card.reunion.status === "finalized") {
+    return `${card.reunion.name} is finalized — everyone has the shared plan.`;
+  }
+
+  const pendingCount = Math.max(card.householdCount - card.respondedCount, 0);
+  const pendingCopy =
+    pendingCount === 0
+      ? "everyone has replied"
+      : `${pendingCount} household${pendingCount === 1 ? "" : "s"} still need to RSVP`;
+  const weekCount = weeksUntil(card.reunion.lockedDate);
+  const timing =
+    weekCount === null
+      ? "is in motion"
+      : weekCount === 0
+        ? "is this week"
+        : `is ${weekCount} week${weekCount === 1 ? "" : "s"} away`;
+
+  return `${card.reunion.name} ${timing} — ${pendingCopy}.`;
 }
 
 export default async function DashboardPage() {
@@ -143,6 +226,23 @@ export default async function DashboardPage() {
     })),
   ];
 
+  const organizerIds = Array.from(
+    new Set(cardSource.map((card) => card.reunion.organizerId))
+  );
+  const organizerRows = organizerIds.length
+    ? await db
+        .select({
+          id: userTable.id,
+          name: userTable.name,
+          email: userTable.email,
+        })
+        .from(userTable)
+        .where(inArray(userTable.id, organizerIds))
+    : [];
+  const organizersById = new Map(
+    organizerRows.map((organizer) => [organizer.id, organizer])
+  );
+
   const cards: ReunionCardView[] = await Promise.all(
     cardSource.map(async (card, index) => {
       const [households, dateOptions] = await Promise.all([
@@ -156,6 +256,7 @@ export default async function DashboardPage() {
         (sum, h) => sum + (h.partySize ?? 1),
         0
       );
+      const organizer = organizersById.get(card.reunion.organizerId);
 
       return {
         ...card,
@@ -163,6 +264,12 @@ export default async function DashboardPage() {
         respondedCount: households.filter((h) => h.rsvpStatus !== "pending").length,
         totalPartySize,
         dateOptionCount: dateOptions.length,
+        organizerName:
+          organizer?.name ??
+          (card.role === "organizer" ? session.user.name ?? null : null),
+        organizerEmail:
+          organizer?.email ??
+          (card.role === "organizer" ? session.user.email ?? null : null),
         imageUrl:
           card.reunion.heroImageUrl ||
           CARD_IMAGES[index % CARD_IMAGES.length],
@@ -172,9 +279,6 @@ export default async function DashboardPage() {
 
   const heroCard = cards[0];
   const displayName = firstName(session.user.name, session.user.email);
-  const pendingCount = heroCard
-    ? Math.max(heroCard.householdCount - heroCard.respondedCount, 0)
-    : 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -191,13 +295,7 @@ export default async function DashboardPage() {
           />
           <div className="kc-dashboard-hero-content">
             <h1>Welcome back, {displayName}</h1>
-            <p>
-              {heroCard
-                ? `${heroCard.reunion.name} is in motion - ${pendingCount} household${
-                    pendingCount === 1 ? "" : "s"
-                  } still need to RSVP.`
-                : "Start your first reunion and get the family moving from scattered texts to one shared plan."}
-            </p>
+            <p>{heroCopy(heroCard)}</p>
           </div>
         </section>
 
@@ -224,7 +322,7 @@ export default async function DashboardPage() {
 
         <div className="kc-dashboard-tip">
           <strong>Tip:</strong> KinCircle suggests a meeting location based on
-          where everyone lives once households share their city and state.
+          where everyone lives once 3+ households share their city and state.
         </div>
       </main>
     </div>
@@ -232,6 +330,9 @@ export default async function DashboardPage() {
 }
 
 function ReunionCardItem({ card }: { card: ReunionCardView }) {
+  const badge = badgeFor(card);
+  const step = stepFor(card);
+
   return (
     <Link
       className="kc-reunion-card"
@@ -249,36 +350,25 @@ function ReunionCardItem({ card }: { card: ReunionCardView }) {
       </div>
       <div className="kc-reunion-card-body">
         <div className="kc-reunion-card-topline">
-          <span
-            className={`badge dot${
-              card.reunion.status === "date_locked" ||
-              card.reunion.status === "finalized"
-                ? " sage"
-                : card.role === "member"
-                  ? " muted"
-                  : ""
-            }`}
-          >
-            {card.role === "member" && card.reunion.status === "planning"
-              ? "Member"
-              : statusCopy(card.reunion.status)}
-          </span>
+          <span className={badge.className}>{badge.label}</span>
           <small>{formatDateLabel(card)}</small>
         </div>
         <h3>{card.reunion.name}</h3>
         <p className="muted">{metaCopy(card)}</p>
-        <div className="kc-dashboard-progress" aria-hidden="true">
-          <span
-            style={{
-              width: `${progressFor(card)}%`,
-              background:
-                card.reunion.status === "finalized"
-                  ? "var(--sage)"
-                  : undefined,
-            }}
-          />
-        </div>
-        <small>{nextStepCopy(card)}</small>
+        {step.showProgress ? (
+          <div className="kc-dashboard-progress" aria-hidden="true">
+            <span
+              style={{
+                width: `${step.progress}%`,
+                background:
+                  card.reunion.status === "finalized"
+                    ? "var(--sage)"
+                    : undefined,
+              }}
+            />
+          </div>
+        ) : null}
+        <small>{step.caption}</small>
       </div>
     </Link>
   );
