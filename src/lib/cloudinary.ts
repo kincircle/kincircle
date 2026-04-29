@@ -8,7 +8,10 @@ import {
 
 export { cloudinary };
 
-export type SignUploadInput = {
+export type SignUploadParams = Record<
+  string,
+  string | number | boolean | string[] | undefined
+> & {
   folder: string;
 };
 
@@ -26,19 +29,18 @@ function configureCloudinary() {
   return { cloudName, apiKey, apiSecret };
 }
 
-export function signUploadParams({ folder }: SignUploadInput) {
+export function signUploadParams(params: SignUploadParams) {
   const { cloudName, apiKey, apiSecret } = configureCloudinary();
-  const timestamp = Math.round(Date.now() / 1000);
+  const paramsToSign: SignUploadParams = {
+    ...params,
+    timestamp: params.timestamp ?? Math.round(Date.now() / 1000),
+  };
 
-  const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder },
-    apiSecret
-  );
+  const signature = cloudinary.utils.api_sign_request(paramsToSign, apiSecret);
 
   return {
-    timestamp,
+    ...paramsToSign,
     signature,
-    folder,
     apiKey,
     cloudName,
   };

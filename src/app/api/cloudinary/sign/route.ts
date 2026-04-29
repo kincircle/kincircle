@@ -4,13 +4,18 @@ import { and, eq } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { signUploadParams } from "@/lib/cloudinary";
+import { signUploadParams, type SignUploadParams } from "@/lib/cloudinary";
 import { household, reunion } from "@/db/schema";
 
 export const runtime = "nodejs";
 
 const uploadPurposes = ["hero", "date-options", "photos"] as const;
 type UploadPurpose = (typeof uploadPurposes)[number];
+type ParsedUploadFolder = {
+  folder: string;
+  reunionId: string;
+  purpose: UploadPurpose;
+};
 
 const allowedPurposes = new Set<UploadPurpose>(uploadPurposes);
 const organizerOnlyPurposes = new Set<UploadPurpose>(["hero", "date-options"]);
@@ -21,13 +26,59 @@ function isUploadPurpose(purpose: string): purpose is UploadPurpose {
   return allowedPurposes.has(purpose as UploadPurpose);
 }
 
-function parseUploadFolder(folder: unknown):
+function isSignableValue(
+  value: unknown
+): value is string | number | boolean | string[] | undefined {
+  return (
+    value === undefined ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    (Array.isArray(value) && value.every((item) => typeof item === "string"))
+  );
+}
+
+function readObject(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function parseSignUploadParams(
+  body: unknown
+):
   | {
-      folder: string;
-      reunionId: string;
-      purpose: UploadPurpose;
+      folder: ParsedUploadFolder;
+      paramsToSign: SignUploadParams;
     }
   | undefined {
+  const bodyRecord = readObject(body);
+  if (!bodyRecord) return undefined;
+
+  const rawParams =
+    readObject(bodyRecord.paramsToSign) ??
+    (typeof bodyRecord.folder === "string" ? { folder: bodyRecord.folder } : undefined);
+
+  if (!rawParams) return undefined;
+
+  const folder = parseUploadFolder(rawParams.folder);
+  if (!folder) return undefined;
+
+  const paramsToSign: SignUploadParams = { folder: folder.folder };
+  for (const [key, value] of Object.entries(rawParams)) {
+    if (key === "folder") continue;
+    if (!isSignableValue(value)) return undefined;
+    if (value !== undefined) {
+      paramsToSign[key] = value;
+    }
+  }
+
+  return { folder, paramsToSign };
+}
+
+function parseUploadFolder(folder: unknown): ParsedUploadFolder | undefined {
   if (typeof folder !== "string") return undefined;
 
   const normalized = folder.trim().replace(/\/+$/, "");
@@ -60,13 +111,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const folder = parseUploadFolder(
-    typeof body === "object" && body !== null && "folder" in body
-      ? (body as { folder?: unknown }).folder
-      : undefined
-  );
+  const upload = parseSignUploadParams(body);
 
-  if (!folder) {
+  if (!upload) {
     return NextResponse.json(
       { error: "folder must match kincircle/{reunionId}/{hero|date-options|photos}" },
       { status: 400 }
@@ -76,14 +123,14 @@ export async function POST(req: Request) {
   const [found] = await db
     .select({ organizerId: reunion.organizerId })
     .from(reunion)
-    .where(eq(reunion.id, folder.reunionId));
+    .where(eq(reunion.id, upload.folder.reunionId));
 
   if (!found) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const isOrganizer = found.organizerId === session.user.id;
-  if (organizerOnlyPurposes.has(folder.purpose) && !isOrganizer) {
+  if (organizerOnlyPurposes.has(upload.folder.purpose) && !isOrganizer) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -93,7 +140,7 @@ export async function POST(req: Request) {
       .from(household)
       .where(
         and(
-          eq(household.reunionId, folder.reunionId),
+          eq(household.reunionId, upload.folder.reunionId),
           eq(household.claimedByUserId, session.user.id)
         )
       );
@@ -103,5 +150,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json(signUploadParams({ folder: folder.folder }));
+  return NextResponse.json(signUploadParams(upload.paramsToSign));
 }

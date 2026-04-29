@@ -13,8 +13,10 @@ import { VotingSection } from "@/components/reunion/VotingSection";
 import { LocationSection } from "@/components/reunion/LocationSection";
 import { StatusSection } from "@/components/reunion/StatusSection";
 import { UpdatesSection } from "@/components/reunion/UpdatesSection";
+import { HeroPhotoUploader } from "@/components/reunion/HeroPhotoUploader";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { getCloudinaryApiKey, getCloudinaryCloudName } from "@/lib/env";
 
 const FALLBACK_HERO_IMAGE_URL =
   "/images/Outdoor_gathering_banner_ratio_219_prompt_wide_cin_8fd89a70be.jpeg";
@@ -161,6 +163,12 @@ export default async function ReunionDetailPage({
   const countdownDays = daysUntil(found.lockedDate);
   const nextUp = getNextUpNudge(found.status, householdCount, isOrganizer);
   const pendingCount = Math.max(householdCount - respondedCount, 0);
+  const cloudinaryUploadConfig = isOrganizer
+    ? {
+        cloudName: getCloudinaryCloudName(),
+        apiKey: getCloudinaryApiKey(),
+      }
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -188,6 +196,15 @@ export default async function ReunionDetailPage({
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/15 to-black/65" />
+            {cloudinaryUploadConfig && (
+              <div className="absolute right-4 top-4 z-10">
+                <HeroPhotoUploader
+                  reunionId={id}
+                  cloudName={cloudinaryUploadConfig.cloudName}
+                  apiKey={cloudinaryUploadConfig.apiKey}
+                />
+              </div>
+            )}
             <div className="relative flex h-full flex-col justify-end gap-2 p-6 text-white sm:px-8">
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="badge on-photo">

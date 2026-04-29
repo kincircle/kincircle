@@ -115,6 +115,29 @@ describe("POST /api/cloudinary/sign", () => {
     expect(select).toHaveBeenCalledOnce();
   });
 
+  it("signs upload widget params for organizer hero uploads", async () => {
+    getSession.mockResolvedValue({ user: { id: "organizer-1" } });
+    queueDbRows([{ organizerId: "organizer-1" }]);
+    const { POST } = await import("./route");
+
+    const response = await POST(
+      jsonRequest({
+        paramsToSign: {
+          folder: "kincircle/00000000-0000-4000-8000-000000000000/hero",
+          source: "uw",
+          timestamp: 123,
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(signUploadParams).toHaveBeenCalledWith({
+      folder: "kincircle/00000000-0000-4000-8000-000000000000/hero",
+      source: "uw",
+      timestamp: 123,
+    });
+  });
+
   it("allows a claimed household member to sign reunion photo uploads", async () => {
     getSession.mockResolvedValue({ user: { id: "member-1" } });
     queueDbRows([{ organizerId: "organizer-1" }]);
